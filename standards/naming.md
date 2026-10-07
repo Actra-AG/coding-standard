@@ -22,7 +22,8 @@
 | Enum                          | PascalCase with `Enum` suffix             | `RequestMethodEnum`                          |
 | Enum case                     | UPPER_SNAKE_CASE                          | `RequestMethodEnum::GET`, `STATUS_ACTIVE`    |
 | Exception                     | `Exception` suffix                        | `DbRowValueException`                        |
-| Value object / model          | Noun, `Model` suffix for settings bundles | `TimeOfDay`, `SessionSettingsModel`          |
+| Value object                  | Noun, no type suffix                      | `TimeOfDay`, `EmailAddress`                  |
+| Settings bundle               | `Settings` suffix, no `Model` suffix      | `SessionSettings`, `DbSettings`              |
 | Class constant                | UPPER_SNAKE_CASE, typed                   | `private const string HASH_ALGORITHM`        |
 | Method, function              | camelCase, verb first                     | `createFromSqlQuery()`, `isValid()`          |
 | Property, variable, parameter | camelCase                                 | `$emailAddress`                              |
@@ -32,6 +33,11 @@
 | Data provider                 | Topic + `Provider`, `public static`       | `invalidAmountProvider()`                    |
 | Database tables and columns   | snake_case                                | `user_login`, `created_at`                   |
 | HTML/CSS classes, `data-*`    | kebab-case                                | `form-field`, `data-confirm-message`         |
+
+Interfaces and traits have no suffix, so the name used in type hints names the role (`Clock $clock`); the
+implementations get specific names (`SystemClock`, `FixedClock`). External interfaces such as the PSR interfaces
+(`LoggerInterface`, `ClockInterface`) keep their names: implement them directly, never wrap or alias them only to drop
+the suffix.
 
 ## 3. Methods
 

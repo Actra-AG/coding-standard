@@ -3,6 +3,34 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.2.0 (2026-10-07)
+
+### ⚠️ Settings bundles end with `Settings`, without `Model` suffix
+
+The `Model` suffix for settings bundles is removed (see [naming.md](standards/naming.md)): "Settings" already names the
+role, and "Model" suggests a domain or ORM model. Value objects have no type suffix.
+
+Before:
+
+```php
+final readonly class SessionSettingsModel {}
+```
+
+After:
+
+```php
+final readonly class SessionSettings {}
+```
+
+Existing names are renamed when their code is changed (see [naming.md](standards/naming.md), section 4). In public
+libraries this is a breaking change: keep the old name as deprecated alias for one release.
+
+### External interfaces keep their names
+
+Interfaces and traits of the project have no suffix; external interfaces such as the PSR interfaces
+(`LoggerInterface`, `ClockInterface`) are implemented directly with their own names, not wrapped to drop the suffix.
+No code change needed.
+
 ## v1.1.1 (2026-10-07)
 
 ### PHP-CS-Fixer no longer breaks named arguments
