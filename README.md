@@ -18,7 +18,7 @@ This repository is public. It contains rules only, never project data, credentia
 | [standards/html-javascript.md](standards/html-javascript.md) | Generated HTML, accessibility, JavaScript                      |
 | [standards/testing.md](standards/testing.md)                 | Test layout, what to test, test doubles                        |
 | [standards/tooling.md](standards/tooling.md)                 | PHPStan, PHPUnit, Composer scripts, DDEV                       |
-| [standards/versioning.md](standards/versioning.md)           | Public API, SemVer, breaking changes, `UPGRADE.md`             |
+| [standards/versioning.md](standards/versioning.md)           | Release cycle, versions, breaking changes, `UPGRADE.md`        |
 | [standards/git.md](standards/git.md)                         | Commit messages, `.gitignore`, review before commit            |
 | [config/](config)                                            | Shared PHPStan and PHP-CS-Fixer configuration                  |
 | [templates/](templates)                                      | Starter files for projects (`AGENTS.md`, `CLAUDE.md`, configs) |
@@ -48,9 +48,9 @@ This repository is public. It contains rules only, never project data, credentia
 
 ## Releases
 
-Versions are Git tags following [SemVer](standards/versioning.md). Stricter rules that make `composer check` of existing
-projects fail are breaking changes and need a new major version; update projects with `composer update
-actra/coding-standard`.
+Versions are Git tags (see [versioning.md](standards/versioning.md)); changes are listed in [UPGRADE.md](UPGRADE.md).
+Stricter rules that make `composer check` of existing projects fail are breaking changes and are marked with ⚠️ there.
+Update projects with `composer update actra/coding-standard`.
 
 ## Changing the standard
 

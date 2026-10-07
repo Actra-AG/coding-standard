@@ -24,9 +24,16 @@ Attention: What users of the code must know or do, if anything.
 - One topic per commit. Formatting changes of unrelated code go into their own `style` commit.
 - Commit messages never contain secrets, customer names or personal data.
 
-## 2. Branches and pull requests
+## 2. Branches and history
 
+- Keep the history linear and clean. **Never create merge commits** that join separate lines of history.
+    - Update a branch by rebasing it onto `main` (`git rebase main`), not by merging `main` into it.
+    - Integrate a branch with a fast-forward merge (`git merge --ff-only`) after rebasing, or with "Rebase and merge"
+      in pull requests. Disable merge commits in the repository settings and require a linear history for `main`.
+    - Pull with rebase (`git pull --rebase`, or `git config pull.rebase true`).
 - `main` is always releasable and green (`composer check`).
+- Prefer short development cycles: short-lived branches with one topic, integrated and released soon (see
+  [versioning.md](versioning.md)).
 - Work on feature branches named `type/short-description` (`feat/form-labels`, `fix/csrf-compare`) when working with
   pull requests.
 - A pull request covers one topic and describes what changed and why.
@@ -46,7 +53,9 @@ Attention: What users of the code must know or do, if anything.
 Before committing, check:
 
 1. Is `README.md` still correct?
-2. Does `UPGRADE.md` need an entry (always for breaking changes in libraries)?
+2. Does `UPGRADE.md` need an entry (always for breaking changes in libraries)? If the project has none, would it be
+   useful to add one (see [versioning.md](versioning.md))?
 3. Is `composer check` green?
 4. Does the commit message follow section 1?
-5. For a release: which version tag follows (see [versioning.md](versioning.md))?
+5. For a release: which version tag follows, and does `UPGRADE.md` have the section with this version and today's
+   date (see [versioning.md](versioning.md))?

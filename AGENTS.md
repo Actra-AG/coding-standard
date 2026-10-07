@@ -27,6 +27,7 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 
 ## Working on a task
 
+- Prefer short development cycles: small, focused changes that can be released soon.
 - Before changing behaviour, write down (or test) what the existing code does, so no feature gets lost.
 - Larger refactorings are done one area at a time. Plans and handover notes live in `docs/<topic>/plan.md`; follow the
   plan and append handover notes there.
@@ -57,7 +58,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 When asked to review changes before commit, inspect the changed files and answer:
 
 1. Read `README.md` and say whether it needs to be updated.
-2. Read `UPGRADE.md` (if the project has one) and say whether it needs to be updated (always for breaking changes).
+2. Read `UPGRADE.md` and say whether it needs to be updated (always for breaking changes). If the project has none,
+   say whether adding one would be useful.
 3. Suggest a commit message following [git.md](standards/git.md) and the style of previous commit messages.
 4. For versioned packages, check the existing Git tags (`git tag --sort=-v:refname`) and suggest the next release tag
    (see [versioning.md](standards/versioning.md)).
