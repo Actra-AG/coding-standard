@@ -1,0 +1,13 @@
+includes:
+    - vendor/actra/coding-standard/config/phpstan.neon
+    # Only for legacy code, may only shrink
+    - phpstan-baseline.neon
+
+parameters:
+    phpVersion: 80500
+    paths:
+        - src
+        - tests
+    excludePaths:
+        # Generated code only, with a comment saying what it is
+        # - src/generated

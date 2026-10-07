@@ -1,0 +1,24 @@
+{
+  "name": "actra/coding-standard",
+  "description": "Coding standard of Actra AG: rules for developers and AI assistants, strict PHPStan and PHP-CS-Fixer configuration.",
+  "type": "library",
+  "keywords": ["coding-standard", "phpstan", "php-cs-fixer", "per-cs", "psr", "agents", "actra"],
+  "homepage": "https://github.com/Actra-AG/coding-standard",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Actra AG",
+      "email": "info@actra.ch",
+      "homepage": "https://www.actra.ch"
+    }
+  ],
+  "require": {
+    "php": ">=8.5",
+    "friendsofphp/php-cs-fixer": "^3.95",
+    "phpstan/phpstan": "^2.3",
+    "phpstan/phpstan-deprecation-rules": "^2.0",
+    "phpstan/phpstan-phpunit": "^2.1",
+    "phpstan/phpstan-strict-rules": "^2.1",
+    "spaze/phpstan-disallowed-calls": "^4.14"
+  }
+}

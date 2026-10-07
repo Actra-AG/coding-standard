@@ -1,0 +1,35 @@
+# Strict PHPStan configuration of the Actra coding standard.
+# Include it in the phpstan.neon of the project:
+#
+#   includes:
+#       - vendor/actra/coding-standard/config/phpstan.neon
+
+includes:
+    - phar://phpstan.phar/conf/bleedingEdge.neon
+    - ../../../phpstan/phpstan-strict-rules/rules.neon
+    - ../../../phpstan/phpstan-deprecation-rules/rules.neon
+    - ../../../phpstan/phpstan-phpunit/extension.neon
+    - ../../../phpstan/phpstan-phpunit/rules.neon
+    - ../../../spaze/phpstan-disallowed-calls/extension.neon
+    - ../../../spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+    - ../../../spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+    - ../../../spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
+    - ../../../spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
+    - disallowed.neon
+
+parameters:
+    level: 10
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkMissingCallableSignature: true
+    checkMissingOverrideMethodAttribute: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkTooWideParameterOutInProtectedAndPublicMethods: true
+    checkTooWideThrowTypesInProtectedAndPublicMethods: true
+    reportPossiblyNonexistentGeneralArrayOffset: true
+    reportPossiblyNonexistentConstantArrayOffset: true
+    reportAlwaysTrueInLastCondition: true
+    reportNonIntStringArrayKey: true
+    reportAnyTypeWideningInVarTag: true
+    rememberPossiblyImpureFunctionValues: false
+    reportUnmatchedIgnoredErrors: true

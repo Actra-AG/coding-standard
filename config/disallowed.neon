@@ -1,0 +1,47 @@
+# Rules of the Actra coding standard enforced with spaze/phpstan-disallowed-calls,
+# in addition to its bundled dangerous, execution, insecure and loose calls.
+
+parameters:
+    disallowedFunctionCalls:
+        -
+            function: 'isset()'
+            message: 'compare explicitly: array_key_exists(), !== null or a typed property (see standards/php.md)'
+        -
+            function: 'empty()'
+            message: "compare explicitly: === '', === [], === 0 or !== null (see standards/php.md)"
+        -
+            function: 'is_null()'
+            message: 'use === null or !== null'
+        -
+            function: 'array_search()'
+            message: 'set the third parameter $strict to `true` to also check the types to prevent type juggling bugs'
+            allowParamsAnywhere:
+                3: true
+        -
+            function: 'openssl_random_pseudo_bytes()'
+            message: 'use random_bytes()'
+        -
+            function: 'unserialize()'
+            message: 'use json_decode(); unserialize() of untrusted data allows object injection'
+        -
+            function: 'compact()'
+            message: 'build the array explicitly'
+    disallowedControlStructures:
+        -
+            controlStructure:
+                - 'switch'
+            message: 'use match'
+        -
+            controlStructure:
+                - 'goto'
+            message: 'restructure the code'
+    disallowedKeywords:
+        -
+            keyword: 'global'
+            message: 'pass dependencies through the constructor'
+    disallowedSuperglobals:
+        -
+            superglobal:
+                - '$GLOBALS'
+                - '$_REQUEST'
+            message: 'read $_GET, $_POST or $_COOKIE explicitly in the request layer'

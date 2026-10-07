@@ -1,0 +1,20 @@
+# Ignore everything
+*
+
+# Allow specific files
+!/.editorconfig
+!/.gitattributes
+!/.gitignore
+!/AGENTS.md
+!/CLAUDE.md
+!/composer.json
+!/LICENSE
+!/README.md
+
+# Allow specific directories
+!/config/
+!/config/**
+!/standards/
+!/standards/**
+!/templates/
+!/templates/**
