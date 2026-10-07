@@ -85,9 +85,17 @@ Every task and every commit must end with a green `composer check`.
 - `.php-cs-fixer.dist.php` in the project root uses the shared rule set
   [config/php-cs-fixer.php](../config/php-cs-fixer.php) and adds the file header with the license of the project (see
   [template](../templates/.php-cs-fixer.dist.php)).
-- The rule set implements PER Coding Style (risky rules included), `declare(strict_types=1);`, strict comparisons,
-  `=== null` instead of `is_null()`, no Yoda conditions, ordered and unused imports, trailing commas in multi-line
-  lists and the PHP 8.5 migration rules.
+- The rule set implements PER Coding Style (risky rules included), `declare(strict_types=1);`, `=== null` instead of
+  `is_null()`, no Yoda conditions, ordered and unused imports, trailing commas in multi-line lists and the PHP 8.5
+  migration rules.
+- Fixers that rewrite function calls or comparisons without supporting named arguments or without knowing the types
+  are disabled: `strict_param`, `strict_comparison`, `modernize_types_casting`, `pow_to_exponentiation`,
+  `random_api_migration`. PHPStan reports missing `strict` parameters, loose comparisons (`==`) and insecure calls
+  (`rand()`); fix them by hand with named arguments and the correct comparison for the type, e.g.
+  `in_array(needle: $id, haystack: $ids, strict: true)` or `$amount === 0.0`.
+- Risky fixers change code, not only its formatting. Review the diff of `composer cs:fix` like any other code change and
+  run `composer check` afterwards (PHPStan also reports code that does not compile, e.g. a positional argument after a
+  named argument). Do not commit files that PHP-CS-Fixer skipped because of lint errors.
 - Do not disable rules in the project. If a rule is wrong for all projects, change it here.
 - `.php-cs-fixer.cache` is not committed.
 

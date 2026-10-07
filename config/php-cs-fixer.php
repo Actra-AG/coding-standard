@@ -19,15 +19,20 @@ return [
     '@PHP8x5Migration' => true,
     '@PHP8x5Migration:risky' => true,
     'declare_strict_types' => true,
-    'strict_comparison' => true,
-    'strict_param' => true,
+    // These fixers ignore named arguments and produce invalid code, e.g. `in_array(needle: $a, haystack: $b, true)`
+    // or `(int) (value: $a)`, or they change the behaviour, e.g. `$float == 0` to `$float === 0`. PHPStan reports
+    // missing `strict` parameters, loose comparisons and `rand()`; fix them by hand (see standards/tooling.md).
+    'modernize_types_casting' => false,
+    'pow_to_exponentiation' => false,
+    'random_api_migration' => false,
+    'strict_comparison' => false,
+    'strict_param' => false,
     'is_null' => true,
     'yoda_style' => [
         'equal' => false,
         'identical' => false,
         'less_and_greater' => false,
     ],
-    'modernize_types_casting' => true,
     'no_alias_functions' => true,
     'nullable_type_declaration' => ['syntax' => 'question_mark'],
     'nullable_type_declaration_for_default_null_value' => true,

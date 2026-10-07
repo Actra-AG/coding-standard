@@ -3,6 +3,24 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.1.1 (2026-10-07)
+
+### PHP-CS-Fixer no longer breaks named arguments
+
+`strict_param`, `strict_comparison`, `modernize_types_casting`, `pow_to_exponentiation` and `random_api_migration` are
+disabled. They ignore named arguments (PHP-CS-Fixer 3.95.27) and produced invalid code or changed the behaviour:
+
+```php
+in_array(needle: $a, haystack: $b);  // became in_array(needle: $a, haystack: $b, true): fatal error
+intval(value: $a);                   // became (int) (value: $a): parse error
+pow(num: 1024, exponent: $b);        // became (num: 1024)**( exponent: $b): parse error
+$float == 0;                         // became $float === 0: always false
+```
+
+PHPStan still reports missing `strict` parameters, loose comparisons and `rand()`; fix them by hand. No code change
+needed. Projects that already ran `composer cs:fix` with v1.1.0 or older check the changed calls and comparisons (see
+[tooling.md](standards/tooling.md), section 4).
+
 ## v1.1.0 (2026-10-07)
 
 ### ⚠️ Breaking changes no longer require a major version
