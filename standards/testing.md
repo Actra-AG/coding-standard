@@ -29,6 +29,8 @@ phpunit.xml
   types from external input.
 - Code that needs a real database or HTTP is kept thin and tested via its pure parts; integration tests are optional
   and must not depend on external services or real data.
+- Libraries without an own running app (no example app) check changes of views, templates, generated HTML and assets
+  in a consuming project that uses the library checkout as Composer path repository (`"type": "path"`).
 
 ## 3. How to write tests
 

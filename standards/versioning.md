@@ -82,3 +82,11 @@ FormField::create(name: 'email', label: 'Email address');
 
 Was `PHP_INT_MAX`. No code change needed.
 ````
+
+## 7. Database and assets of libraries
+
+- A library that owns database tables ships `db/schema.sql` (and `db/data.sql` for required rows) for new
+  installations and one `db/updates/<version>.sql` per release that changes them. The `UPGRADE.md` section of that
+  version names the update script. Schema changes are breaking changes for projects that query the tables directly.
+- A library that ships CSS or JavaScript says in the `UPGRADE.md` section of every release that changes them whether
+  projects must rebuild their bundles or republish the files.

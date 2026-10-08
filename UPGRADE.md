@@ -3,6 +3,21 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.4.0 (2026-10-08)
+
+### Texts and translations
+
+New [standards/i18n.md](standards/i18n.md): no hard-coded user-visible texts, plain-text messages escaped on output,
+named placeholders that are the same in every language, the language of a request chosen once and texts for another
+person in that person's language. Existing hard-coded texts are moved when their code is changed.
+
+### Libraries: database update scripts, asset notes, checks in a consuming project
+
+[versioning.md](standards/versioning.md), section 7: libraries with database tables ship `schema.sql` and one
+`db/updates/<version>.sql` per changing release; libraries with assets say in `UPGRADE.md` whether projects must
+rebuild their bundles. [testing.md](standards/testing.md): libraries without an own app check views and assets in a
+consuming project with a Composer path repository. No code change needed.
+
 ## v1.3.0 (2026-10-08)
 
 ### Opt-in PHPStan rule against superglobals
