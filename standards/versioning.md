@@ -21,7 +21,9 @@ version.
 Check the existing tags (`git tag --sort=-v:refname`) before suggesting the next version.
 
 Because minor versions may contain breaking changes, a Composer constraint like `^4.7` also installs breaking changes.
-Consumers read `UPGRADE.md` before running `composer update`, and `composer check` must be green afterwards.
+Consumers read `UPGRADE.md` before running `composer update`, and `composer check` must be green afterwards. A library
+that depends on such a package locks its minor version (see section 8), because its own consumers cannot adapt the
+library's code.
 
 ## 3. Public API
 
@@ -95,8 +97,11 @@ Was `PHP_INT_MAX`. No code change needed.
 
 - Read the `UPGRADE.md` of the dependency from the installed to the new version and adapt the code to every change
   marked ⚠️ before raising the constraint.
-- The lower bound of the constraint is the lowest version that has every API the code uses (`^4.15`, not the newest
+- The lower bound of the constraint is the lowest version that has every API the code uses (`4.15`, not the newest
   release). Check `composer check` against exactly that version
-  (`composer update vendor/package --with vendor/package:4.15.0`); a later `composer update` installs the newest.
+  (`composer update vendor/package --with vendor/package:4.15.0`).
+- Applications use `^4.15`. Libraries lock the minor version of a dependency that may break in minor versions
+  (`~4.15.0` = patches only), because a newer minor version can break the library in its consumers' projects; the
+  library raises it deliberately with its own release.
 - Raise a dependency with many releases in steps: one released version of the dependency per step, each with a green
   `composer check`, instead of one jump over all breaking changes.

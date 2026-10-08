@@ -3,6 +3,17 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.7.0 (2026-10-08)
+
+### ⚠️ Libraries lock the minor version of their Actra dependencies
+
+[versioning.md](standards/versioning.md), section 8: a library that depends on a package with breaking changes in
+minor versions requires it with `~X.Y.Z` (patches only) instead of `^X.Y`, and raises it with its own release. With
+`^`, `composer update` in a consuming project installed a newer minor version that the library did not support yet
+(e.g. a new abstract method). Applications keep `^`.
+
+Before (library): `"actra/yuf": "^4.37"`. After (library): `"actra/yuf": "~4.37.0"`.
+
 ## v1.6.0 (2026-10-08)
 
 ### CSS, external JavaScript libraries, raising dependencies
