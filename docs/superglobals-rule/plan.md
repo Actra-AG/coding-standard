@@ -43,3 +43,13 @@ An opt-in PHPStan configuration that reports direct access to `$_GET`, `$_POST`,
   `actraSuperglobalsAllowIn` allowed, `$_REQUEST` still reported there; without the parameter everything is reported.
 - Documented in `standards/tooling.md` (section 3), `standards/security.md` (section 2), `UPGRADE.md` (v1.3.0), README.
 - Open: task 5 (try it in `actra/yuf`).
+
+### 2026-10-08: task 5 done, plan complete
+
+- `actra/yuf` switched the rule on in commit 44914ac (`build: switch on the PHPStan rule against superglobals`) and
+  uses it with coding standard v1.5.0. `actraSuperglobalsAllowIn` lists the expected places (`Core`, `HttpRequest`,
+  `NativeSessionStorage`, `AbstractSessionHandler`) and the tests that prepare or inspect superglobals; the baseline has
+  no `disallowed.variable` entries.
+- `ddev exec vendor/bin/phpstan analyse` is green. A probe file outside the allowed paths reports `$_GET` and
+  `$_SESSION` as `disallowed.variable` with the message from the rule.
+- No change to the rule needed.
