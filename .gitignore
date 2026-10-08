@@ -13,6 +13,8 @@
 !/UPGRADE.md
 
 # Allow specific directories
+!/docs/
+!/docs/**
 !/config/
 !/config/**
 !/standards/
