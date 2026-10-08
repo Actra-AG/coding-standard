@@ -22,6 +22,9 @@ Order: **read → sanitize (normalize) → validate → use typed values.**
 
 - Read input in one place per request (request/controller layer) and turn it into typed values or value objects.
   Logic classes never read superglobals (see [php.md](php.md), section 1).
+- If the framework has request and session objects, use them instead of `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`,
+  `$_SERVER` and `$_SESSION`; the opt-in PHPStan configuration `phpstan-no-superglobals.neon` enforces this (see
+  [tooling.md](tooling.md), section 3).
 - **Sanitizing** only normalizes harmless representation differences, e.g. trimming whitespace, unifying line breaks,
   Unicode normalization, removing thousands separators, lowercasing a domain. It never "repairs" malicious input
   (stripping tags, removing quotes) and is never a replacement for validation or escaping.

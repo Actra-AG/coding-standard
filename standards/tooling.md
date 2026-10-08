@@ -79,6 +79,23 @@ Every task and every commit must end with a green `composer check`.
       `// @phpstan-ignore argument.type (PDO returns mixed, value validated above)`.
 - A deliberately allowed exception of a disallowed call (e.g. reading `$_POST` in the request layer of a framework) is
   configured with `allowIn` for the specific path in the project's `phpstan.neon`, never with a global switch.
+- **Opt-in: no superglobals.** Projects whose framework has request and session objects (yuf, Craft CMS / Yii,
+  Symfony) also include [config/phpstan-no-superglobals.neon](../config/phpstan-no-superglobals.neon). It reports
+  `$_GET`, `$_POST`, `$_COOKIE`, `$_FILES`, `$_SERVER` and `$_SESSION` (identifier `disallowed.variable`);
+  `$GLOBALS` and `$_REQUEST` are disallowed in every project. Not for WordPress plugins, legacy code without request
+  objects or plain scripts. The few files that must read superglobals (entry points such as `public/index.php`, the
+  framework's own request factory or session handler) are listed in `actraSuperglobalsAllowIn` (paths relative to
+  the project root, `fnmatch()` patterns), not in the baseline:
+  ```neon
+  includes:
+      - vendor/actra/coding-standard/config/phpstan.neon
+      - vendor/actra/coding-standard/config/phpstan-no-superglobals.neon
+
+  parameters:
+      actraSuperglobalsAllowIn:
+          - public/index.php
+          - src/Http/HttpRequest.php
+  ```
 
 ## 4. PHP-CS-Fixer
 

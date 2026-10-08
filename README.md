@@ -44,7 +44,10 @@ This repository is public. It contains rules only, never project data, credentia
     - `phpstan.neon`, `.php-cs-fixer.dist.php` (license in the header), `.editorconfig`.
 3. Add the Composer scripts from [tooling.md](standards/tooling.md) and make `composer check` green (use a PHPStan
    baseline for legacy code).
-4. Remove rules from the project documentation that are already covered here.
+4. Projects whose framework has request and session objects also include
+   [config/phpstan-no-superglobals.neon](config/phpstan-no-superglobals.neon) (see [tooling.md](standards/tooling.md),
+   section 3).
+5. Remove rules from the project documentation that are already covered here.
 
 ## Releases
 

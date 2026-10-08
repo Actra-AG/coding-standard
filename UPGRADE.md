@@ -3,6 +3,15 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.3.0 (2026-10-08)
+
+### Opt-in PHPStan rule against superglobals
+
+New [config/phpstan-no-superglobals.neon](config/phpstan-no-superglobals.neon) reports `$_GET`, `$_POST`, `$_COOKIE`,
+`$_FILES`, `$_SERVER` and `$_SESSION`, for projects whose framework has request and session objects. Files that must
+read superglobals (entry points, the framework's request factory) are allowed with `actraSuperglobalsAllowIn` (see
+[tooling.md](standards/tooling.md), section 3). It is not included by default: no change for existing projects.
+
 ## v1.2.0 (2026-10-07)
 
 ### ⚠️ Settings bundles end with `Settings`, without `Model` suffix

@@ -29,3 +29,17 @@ An opt-in PHPStan configuration that reports direct access to `$_GET`, `$_POST`,
    (`DOCUMENT_ROOT`) and the native session storage / session handler.
 
 ## Handover notes
+
+### 2026-10-08: tasks 1–4 done
+
+- `disallowedSuperglobals` entries are checked one by one; an entry is skipped only if its own `allowIn` matches. An
+  additional entry with `allowIn` in the project does therefore not allow anything: the allowed paths must be part of
+  our entry. `config/phpstan-no-superglobals.neon` reads them from the parameter `actraSuperglobalsAllowIn` (declared
+  in `parametersSchema`, default `[]`). Default error identifier: `disallowed.variable` (no own `errorIdentifier`,
+  like `disallowed.neon`).
+- `$GLOBALS` and `$_REQUEST` are not part of the new entry: `disallowed.neon` forbids them in every project, without
+  `allowIn`. `$_ENV` is not covered (not in the goal list).
+- Verified with PHPStan in Docker (PHP 8.5.11) in a scratch project: superglobals reported in `src/`, file listed in
+  `actraSuperglobalsAllowIn` allowed, `$_REQUEST` still reported there; without the parameter everything is reported.
+- Documented in `standards/tooling.md` (section 3), `standards/security.md` (section 2), `UPGRADE.md` (v1.3.0), README.
+- Open: task 5 (try it in `actra/yuf`).

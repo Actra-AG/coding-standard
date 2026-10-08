@@ -1,0 +1,29 @@
+# Opt-in rule of the Actra coding standard: no direct access to superglobals, for projects whose framework has request
+# and session objects. Include it after phpstan.neon in the phpstan.neon of the project:
+#
+#   includes:
+#       - vendor/actra/coding-standard/config/phpstan.neon
+#       - vendor/actra/coding-standard/config/phpstan-no-superglobals.neon
+#
+#   parameters:
+#       actraSuperglobalsAllowIn:
+#           - public/index.php
+#
+# $GLOBALS and $_REQUEST are already disallowed everywhere by disallowed.neon.
+
+parametersSchema:
+    actraSuperglobalsAllowIn: listOf(string())
+
+parameters:
+    actraSuperglobalsAllowIn: []
+    disallowedSuperglobals:
+        -
+            superglobal:
+                - '$_GET'
+                - '$_POST'
+                - '$_COOKIE'
+                - '$_FILES'
+                - '$_SERVER'
+                - '$_SESSION'
+            message: 'use the request or session object of your framework (see standards/security.md)'
+            allowIn: %actraSuperglobalsAllowIn%
