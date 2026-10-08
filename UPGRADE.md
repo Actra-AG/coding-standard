@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.5.0 (2026-10-08)
+
+### Global rules first
+
+[AGENTS.md](AGENTS.md), "Working on a task": before a rule is added to a project, it is decided whether it applies to
+every Actra project; such rules go into the coding standard, the project keeps only its specific part. No code change
+needed.
+
 ## v1.4.1 (2026-10-08)
 
 [security.md](standards/security.md), section 1: the example for an explicit unsafe variant names an existing API

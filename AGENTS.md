@@ -33,6 +33,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Larger refactorings are done one area at a time. Plans and handover notes live in `docs/<topic>/plan.md`; follow the
   plan and append handover notes there.
 - Mention assumptions. Ask when a requirement is ambiguous and the answer changes the result.
+- Before adding a rule to the `AGENTS.md` or the standards of a project, decide whether it applies to every Actra
+  project. If so, add it to this coding standard instead (with a release), and keep only the project-specific part in
+  the project.
 
 ## Response style
 
