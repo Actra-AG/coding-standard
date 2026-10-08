@@ -15,7 +15,7 @@ This repository is public. It contains rules only, never project data, credentia
 | [standards/naming.md](standards/naming.md)                   | Namespaces, classes, enums, methods, variables, tests          |
 | [standards/php.md](standards/php.md)                         | Structure, types, enums, style, exceptions, comments           |
 | [standards/security.md](standards/security.md)               | Validation, sanitizing, escaping, SQL, CSRF, sessions, secrets |
-| [standards/html-javascript.md](standards/html-javascript.md) | Generated HTML, accessibility, JavaScript                      |
+| [standards/html-javascript.md](standards/html-javascript.md) | Generated HTML, accessibility, JavaScript, CSS                 |
 | [standards/i18n.md](standards/i18n.md)                       | Texts and translations, placeholders, language at runtime      |
 | [standards/testing.md](standards/testing.md)                 | Test layout, what to test, test doubles                        |
 | [standards/tooling.md](standards/tooling.md)                 | PHPStan, PHPUnit, Composer scripts, DDEV                       |

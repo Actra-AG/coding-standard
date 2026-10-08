@@ -3,6 +3,19 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.6.0 (2026-10-08)
+
+### CSS, external JavaScript libraries, raising dependencies
+
+- [html-javascript.md](standards/html-javascript.md), section 3: plain CSS with custom properties, one file per block
+  imported by one entry file, a preprocessor or build step only with a reason; section 2: no external JavaScript
+  library without a reason.
+- [versioning.md](standards/versioning.md), section 8: read the `UPGRADE.md` of a dependency before raising it, use the
+  lowest version with the used API as lower bound and check against exactly that version, raise a dependency with many
+  releases in steps.
+
+No code change needed; projects with a CSS preprocessor or JavaScript libraries name the reason in their `AGENTS.md`.
+
 ## v1.5.0 (2026-10-08)
 
 ### Global rules first

@@ -90,3 +90,13 @@ Was `PHP_INT_MAX`. No code change needed.
   version names the update script. Schema changes are breaking changes for projects that query the tables directly.
 - A library that ships CSS or JavaScript says in the `UPGRADE.md` section of every release that changes them whether
   projects must rebuild their bundles or republish the files.
+
+## 8. Raising a dependency
+
+- Read the `UPGRADE.md` of the dependency from the installed to the new version and adapt the code to every change
+  marked ⚠️ before raising the constraint.
+- The lower bound of the constraint is the lowest version that has every API the code uses (`^4.15`, not the newest
+  release). Check `composer check` against exactly that version
+  (`composer update vendor/package --with vendor/package:4.15.0`); a later `composer update` installs the newest.
+- Raise a dependency with many releases in steps: one released version of the dependency per step, each with a green
+  `composer check`, instead of one jump over all breaking changes.

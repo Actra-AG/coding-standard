@@ -15,7 +15,8 @@
 
 ## 2. JavaScript
 
-- Vanilla JavaScript as ES modules. No framework or build step without a reason agreed with the team.
+- Vanilla JavaScript as ES modules. No framework, external library or build step without a reason agreed with the
+  team.
 - One module per purpose, attached to elements via `data-*` attributes, no global variables.
 - Progressive enhancement only: the page works without JavaScript, JavaScript improves it.
 - No inline `<script>` without a CSP nonce. No `eval()`, `new Function()` or `innerHTML` with untrusted data; use
@@ -23,3 +24,12 @@
 - `const` by default, `let` where reassignment is needed, never `var`. Strict equality (`===`) only.
 - Data from the server is passed via `data-*` attributes or JSON (`<script type="application/json">`), not by
   generating JavaScript code.
+
+## 3. CSS
+
+- Plain CSS with custom properties (`--clr-primary`) for colours, spacing and other shared values. No preprocessor or
+  build step without a reason agreed with the team (as for JavaScript).
+- One file per block or component, imported by one entry file; class names in kebab-case (see
+  [naming.md](naming.md)).
+- No inline styles (see section 1); state is shown with classes or attributes (`aria-current`, `[hidden]`), not set by
+  JavaScript as style.
