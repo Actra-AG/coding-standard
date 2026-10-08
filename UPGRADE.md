@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.4.1 (2026-10-08)
+
+[security.md](standards/security.md), section 1: the example for an explicit unsafe variant names an existing API
+(`HtmlText::fromHtml()` next to `HtmlText::fromText()`) instead of `HtmlText::unencoded()`. No code change needed.
+
 ## v1.4.0 (2026-10-08)
 
 ### Texts and translations

@@ -12,7 +12,7 @@ by tests.
 - **Validate input, escape output.** Validation happens at the boundary when data enters; escaping happens at the
   moment data leaves into another context (HTML, SQL, shell, URL, header, mail). One does not replace the other.
 - **Secure by default.** The safe variant is the default and the short one; the unsafe one is explicit and named so
-  (`HtmlText::unencoded()`).
+  (e.g. `HtmlText::fromHtml()` for trusted HTML next to the escaping `HtmlText::fromText()`).
 - **Fail closed.** On missing or invalid data, permissions or tokens, deny and stop; never fall back to a permissive
   default.
 
