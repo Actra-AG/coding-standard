@@ -42,6 +42,7 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Before changing behaviour, write down (or test) what the existing code does, so no feature gets lost.
 - Larger refactorings are done one area at a time. Plans, designs and handover notes live in `docs/plans/<topic>/`
   (`docs/plans/forms/plan.md`), apart from the user docs in `docs/`; follow the plan and append handover notes there.
+  A finished plan gets a last handover note and moves to `docs/plans/done/<topic>/` as history; it is not deleted.
 - Mention assumptions. Ask when a requirement is ambiguous and the answer changes the result.
 - Before adding a rule to the `AGENTS.md` or the standards of a project, decide whether it applies to every Actra
   project. If so, add it to this coding standard instead (with a release), and keep only the project-specific part in

@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.16.0 (2026-10-09)
+
+- Finished plans move to `docs/plans/done/<topic>/` instead of being deleted ([AGENTS.md](AGENTS.md), "Working on a
+  task").
+
 ## v1.15.0 (2026-10-09)
 
 - Code adapted from third-party libraries keeps its license: exact SPDX identifier in `@license`, source and original
