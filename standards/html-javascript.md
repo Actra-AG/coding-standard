@@ -38,9 +38,9 @@
 
 ## 4. Frontend build
 
-The same npm workflow in every project with own CSS or JavaScript: one request per asset type, modern CSS with
-fallbacks. Copy `package.json`, `postcss.config.js`, `stylelint.config.js` and `prettier.config.js` from the
-[templates](../templates).
+The same npm workflow in every project with own CSS or JavaScript, for performance (one minified file and request
+per asset type, see [performance.md](performance.md)) and modern CSS with fallbacks. Copy `package.json`,
+`postcss.config.js`, `stylelint.config.js` and `prettier.config.js` from the [templates](../templates).
 
 - CSS: PostCSS with `postcss-import` (one file), `postcss-preset-env` (browser support) and `cssnano` (minify) →
   `public/css/styles.min.css`.

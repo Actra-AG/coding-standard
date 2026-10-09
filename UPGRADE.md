@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.13.0 (2026-10-09)
+
+- New [performance.md](standards/performance.md): best possible performance is the first priority after security and
+  correctness (early responses, no queries in loops, caching, frontend). Existing code is improved when it is changed.
+
 ## v1.12.0 (2026-10-09)
 
 - Indentation is 2 spaces by default, 4 spaces only for PHP and NEON ([formatting.md](standards/formatting.md),
