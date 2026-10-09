@@ -50,6 +50,11 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 ## Files
 
 - Every file ends with a single newline (see [formatting.md](standards/formatting.md)).
+- Keep `README.md` short: what the project is, how to install, configure and use it, links to details. Details go into
+  topic files in `docs/` (`docs/forms.md`) or the code; remove what is outdated instead of adding to it. Keep the top
+  level clean: no further documentation files there. Keep `UPGRADE.md` entries short (see
+  [versioning.md](standards/versioning.md), section 6). Never leave out instructions developers or AI assistants
+  need.
 - Projects whose `.gitignore` whitelists tracked files: new top-level files or directories must be added there,
   otherwise they are not committed.
 - Never commit secrets, credentials, personal data or real customer data (see [security.md](standards/security.md)).
@@ -64,9 +69,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 
 When asked to review changes before commit, inspect the changed files and answer:
 
-1. Read `README.md` and say whether it needs to be updated.
-2. Read `UPGRADE.md` and say whether it needs to be updated (always for breaking changes). If the project has none,
-   say whether adding one would be useful.
+1. Read `README.md` and say whether it needs to be updated. Propose short additions only.
+2. Read `UPGRADE.md` and say whether it needs to be updated (always for breaking changes), with a short entry. If the
+   project has none, say whether adding one would be useful.
 3. Suggest a commit message following [git.md](standards/git.md) and the style of previous commit messages.
 4. For versioned packages, check the existing Git tags (`git tag --sort=-v:refname`) and suggest the next release tag
    (see [versioning.md](standards/versioning.md)).

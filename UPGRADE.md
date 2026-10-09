@@ -3,6 +3,19 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.9.0 (2026-10-09)
+
+Short `README.md` and `UPGRADE.md` ([AGENTS.md](AGENTS.md), "Files"; [versioning.md](standards/versioning.md),
+section 6):
+
+- `UPGRADE.md` entries say what changes and what consumers must do, in a sentence or a short bullet list.
+- `README.md` covers what the project is and how to use it; details go into `docs/`.
+- A long `UPGRADE.md` may move older sections to `docs/upgrade/v<major>.md`.
+- Libraries ship `docs/` ([git.md](standards/git.md), section 3): replace `/docs/ export-ignore` in `.gitattributes`
+  with `/docs/*/plan.md export-ignore`.
+
+No code change needed.
+
 ## v1.8.0 (2026-10-09)
 
 ### Commit type `content`, short commit messages, code in answers

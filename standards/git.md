@@ -68,8 +68,10 @@ content: update the team page
   must be added to the whitelist.
 - Never commit: `vendor/`, `node_modules/`, caches (including `.php-cs-fixer.cache`), logs, `.env*` files except
   `.env.example*`, IDE settings, local DDEV overrides.
-- Libraries mark development files in `.gitattributes` as `export-ignore` (`tests/`, `docs/`, `.ddev/`, `phpstan.neon`,
-  `.php-cs-fixer.dist.php`, `phpunit.xml`, `AGENTS.md`, …), so they are not part of the installed package.
+- Libraries mark development files in `.gitattributes` as `export-ignore` (`/tests/`, `/.ddev/`, `/phpstan.neon`,
+  `/.php-cs-fixer.dist.php`, `/phpunit.xml`, `/AGENTS.md`, `/docs/*/plan.md`, …), so they are not part of the
+  installed package. `docs/` itself is shipped: it holds the details of `README.md` and `UPGRADE.md` (see
+  [versioning.md](versioning.md), section 6).
 
 ## 4. Review before commit
 

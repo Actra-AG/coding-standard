@@ -49,5 +49,6 @@ phpunit.xml
 1. `composer check` is green (code style, static analysis without new baseline entries, all tests pass).
 2. New and refactored logic classes have unit tests; bug fixes have a regression test.
 3. `UPGRADE.md` lists every breaking change (libraries; projects without one decide whether to add it); `README.md`
-   is updated where needed.
+   is updated where needed. Both stay short (see [versioning.md](versioning.md), section 6, and
+   [AGENTS.md](../AGENTS.md), "Files").
 4. Handover notes are written in the plan (`docs/<topic>/plan.md`), if the task belongs to one.

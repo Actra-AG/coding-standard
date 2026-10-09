@@ -62,27 +62,26 @@ not a breaking change, even if results change, as long as consumers need no code
   version.
 - Projects without an `UPGRADE.md` decide with every change whether adding one would be useful, e.g. when the project
   gets consumers or when a change needs migration instructions.
+- Keep entries as short as possible: what changes and what consumers must do, as one sentence or a short bullet list.
+  A before/after example only for breaking changes, with the smallest code that shows the change. A reason only in a
+  few words where it helps to adapt. No implementation details, no repetition of the commit message; these belong in
+  the commit, the code or `docs/`. Changes without visible effect for consumers (refactorings, tests, internal fixes)
+  are not listed.
+- Never leave out what a consumer must do: every breaking change, migration step and required rebuild stays listed.
+- If `UPGRADE.md` gets long, move the sections of older versions (e.g. per major version) to
+  `docs/upgrade/v<major>.md` and link them at the end.
 
 ````markdown
 ## v4.8.0 (2026-10-07)
 
 ### ⚠️ `FormField::create()` requires a `label`
 
-Before:
+Before: `FormField::create(name: 'email')`. After: `FormField::create(name: 'email', label: 'Email address')`.
 
-```php
-FormField::create(name: 'email');
-```
+### Other changes
 
-After:
-
-```php
-FormField::create(name: 'email', label: 'Email address');
-```
-
-### `AmountParser::toInt()` returns `null` on overflow
-
-Was `PHP_INT_MAX`. No code change needed.
+- `AmountParser::toInt()` returns `null` on overflow instead of `PHP_INT_MAX`.
+- New `DateField` for dates without time.
 ````
 
 ## 7. Database and assets of libraries
