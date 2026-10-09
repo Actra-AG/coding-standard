@@ -100,12 +100,12 @@ Every task and every commit must end with a green `composer check`.
 ## 4. PHP-CS-Fixer
 
 - `.php-cs-fixer.dist.php` in the project root uses the shared rule set
-  [config/php-cs-fixer.php](../config/php-cs-fixer.php) and adds the file header with the license of the project (see
-  [template](../templates/.php-cs-fixer.dist.php)).
+  [config/php-cs-fixer.php](../config/php-cs-fixer.php) and adds the file header with
+  [config/php-cs-fixer-header.php](../config/php-cs-fixer-header.php): `copyright:` (text after `@copyright`),
+  `license:` of the project and `thirdParty:` (see [template](../templates/.php-cs-fixer.dist.php)).
 - `header_comment` never overwrites the license of code adapted from third-party libraries (see [php.md](php.md),
-  section 2). [config/php-cs-fixer-header.php](../config/php-cs-fixer-header.php) chooses the license per file by
-  path, optionally limited to files containing a marker text, with PHP-CS-Fixer's (experimental)
-  `RuleCustomisationPolicyInterface`.
+  section 2). The header helper chooses the license per file by path, optionally limited to files containing a marker
+  text, with PHP-CS-Fixer's (experimental) `RuleCustomisationPolicyInterface`.
 - The rule set implements PER Coding Style (risky rules included), `declare(strict_types=1);`, `=== null` instead of
   `is_null()`, no Yoda conditions, ordered and unused imports, trailing commas in multi-line lists and the PHP 8.5
   migration rules.

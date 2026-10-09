@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.17.0 (2026-10-09)
+
+- ⚠️ [config/php-cs-fixer-header.php](config/php-cs-fixer-header.php) requires `copyright:` (the text after
+  `@copyright`), so other copyright holders can use it. Projects that call the helper add
+  `copyright: 'Actra AG - https://www.actra.ch'` ([template](templates/.php-cs-fixer.dist.php)).
+
 ## v1.16.0 (2026-10-09)
 
 - Finished plans move to `docs/plans/done/<topic>/` instead of being deleted ([AGENTS.md](AGENTS.md), "Working on a
