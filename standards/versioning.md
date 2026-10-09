@@ -108,3 +108,12 @@ Before: `FormField::create(name: 'email')`. After: `FormField::create(name: 'ema
   library raises it deliberately with its own release.
 - Raise a dependency with many releases in steps: one released version of the dependency per step, each with a green
   `composer check`, instead of one jump over all breaking changes.
+
+## 9. Defaults
+
+- New behaviour that improves security or performance is on by default. Where it breaks something, projects opt out
+  with a documented switch, named in the docs and in `UPGRADE.md`.
+- A feature that needs data of the project (a directory, credentials, a cache) gets a required argument, not an
+  optional one: `?FileCache $tokenCache` without default, so no project silently runs without it. `null` is the
+  explicit opt-out.
+- Changing an existing default is a breaking change (⚠️ in `UPGRADE.md`, with what to do, see section 4).

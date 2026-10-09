@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.14.0 (2026-10-09)
+
+- Defaults: security and performance improvements on by default with a documented opt-out, required arguments for
+  features that need project data, changed defaults are breaking ([versioning.md](standards/versioning.md),
+  section 9). Libraries check their optional features against the rule with their next change.
+
 ## v1.13.0 (2026-10-09)
 
 - New [performance.md](standards/performance.md): best possible performance is the first priority after security and

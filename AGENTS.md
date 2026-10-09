@@ -18,6 +18,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   only.
 - Best possible performance is the first priority, after security and correctness: respond and return early, no
   queries in loops, cache wherever it saves noticeable time (see [performance.md](standards/performance.md)).
+- Security and performance improvements are on by default; features that need project data get a required argument
+  (`null` as explicit opt-out). Changing a default is breaking (see [versioning.md](standards/versioning.md),
+  section 9).
 - Explicit comparisons only: always `=== null` / `!== null` (never `is_null()`), never `isset()`, never `empty()`, never
   `==` (see [php.md](standards/php.md), section 5).
 - Imperative rules ("do", "never", "always") are mandatory. "Prefer" and "should" mark defaults: deviate only with a
