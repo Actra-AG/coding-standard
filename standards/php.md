@@ -36,6 +36,38 @@ declare(strict_types=1);
 `@license` names the license of the project (`MIT` for public libraries, `proprietary` for closed projects).
 PHP-CS-Fixer adds and fixes the header (see [tooling.md](tooling.md)).
 
+Code adapted from a third-party library keeps that library's license:
+
+- `@license` names its SPDX identifier exactly as the upstream declares it in its `composer.json` or `LICENSE`
+  (`LGPL-2.1-only`, `Apache-2.0`); never assume "-or-later".
+- A second docblock after `declare(strict_types=1);` names the source (URL), keeps the original `@author` and
+  `@copyright` lines unchanged and states that and how the file was changed (required by Apache-2.0 §4b, LGPL §2a).
+- The folder of the adapted code contains the full upstream license text of the exact version as `LICENSE`, and the
+  upstream `NOTICE` if there is one (Apache-2.0 §4d). A project may add its own `NOTICE` describing its changes.
+- `composer.json` `license` is an SPDX expression of all licenses in the package (`MIT AND LGPL-2.1-only AND
+  Apache-2.0`). `README.md`, section "License", says which parts are under which license and whether proprietary
+  projects may use the package.
+- Copyleft code (GPL, LGPL) is never relicensed as MIT. GPL code is never adopted into MIT or proprietary projects.
+
+```php
+<?php
+
+/**
+ * @copyright Actra AG - https://www.actra.ch
+ * @license   Apache-2.0
+ */
+
+declare(strict_types=1);
+
+/**
+ * Adapted from example/library (https://github.com/example/library), see LICENSE and NOTICE in this folder.
+ * Changed by Actra AG: reduced to parsing and formatting, adapted to the Actra coding standard.
+ *
+ * @author    Jane Doe <jane@example.com>
+ * @copyright 2020 Jane Doe
+ */
+```
+
 ## 3. Types
 
 - `final` classes by default. `readonly` classes or properties for value objects. Non-final only for intended

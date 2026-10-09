@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.15.0 (2026-10-09)
+
+- Code adapted from third-party libraries keeps its license: exact SPDX identifier in `@license`, source and original
+  authors in a second docblock, upstream `LICENSE` and `NOTICE` in its folder, SPDX expression in `composer.json`
+  ([php.md](standards/php.md), section 2). Check the license before adopting third-party code.
+- New [config/php-cs-fixer-header.php](config/php-cs-fixer-header.php) keeps these headers. Projects with adapted code
+  use it as in the [template](templates/.php-cs-fixer.dist.php) and check their headers and licenses.
+
 ## v1.14.0 (2026-10-09)
 
 - Defaults: security and performance improvements on by default with a documented opt-out, required arguments for

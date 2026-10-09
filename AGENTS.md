@@ -33,7 +33,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   it must be green. A PHPStan baseline may only shrink. Fix code style with `composer cs:fix`.
 - Without a local PHP of the required version, run PHP and Composer commands through DDEV (`ddev composer check`), if
   the project has a `.ddev/` configuration. If DDEV is not running, ask the user to start it (`ddev start`).
-- Do not add Composer or npm packages without asking.
+- Do not add Composer or npm packages without asking. Before adopting third-party code, check that its license is
+  compatible with the project's license (see [php.md](standards/php.md), section 2); ask when in doubt.
 
 ## Working on a task
 
