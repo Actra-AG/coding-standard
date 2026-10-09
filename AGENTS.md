@@ -43,6 +43,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Do not summarize or restate the problem unless asked.
 - Mention assumptions when relevant.
 - Do not mention the attached context unless it is needed for the answer.
+- When code is requested, show only the changed code blocks, each with its file path. Do not repeat unchanged
+  surrounding code.
+- Explain code with short inline comments in the code rather than long markdown paragraphs.
 
 ## Files
 
@@ -55,7 +58,7 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 
 - Never run `git commit`, `git add` or `git push` on your own. Prepare the commit message and let the user commit.
 - Inspect the actual changes (`git status`, `git diff`, `git diff --staged`) before proposing a commit message.
-- Commit messages follow [git.md](standards/git.md) (Conventional Commits with a bullet list body).
+- Commit messages follow [git.md](standards/git.md) (Conventional Commits, short and clean).
 
 ## Before commit suggestions
 

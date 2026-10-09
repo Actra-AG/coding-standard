@@ -3,6 +3,20 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing projects
 fail or that change how projects work.
 
+## v1.8.0 (2026-10-09)
+
+### Commit type `content`, short commit messages, code in answers
+
+- [git.md](standards/git.md), section 1: new type `content` for editorial changes in websites and CMS projects without
+  code change. Topics like SEO are a scope (`content(seo): …`, `feat(seo): …`), not an own type. The body may be
+  omitted if the subject already says everything; bullets do not repeat the subject or list every touched file. The
+  `Attention:` paragraph is required for breaking changes.
+- [AGENTS.md](AGENTS.md), "Response style": show only the changed code blocks with their file path, explain with short
+  inline comments instead of long markdown paragraphs.
+
+No code change needed. Projects remove these rules and own commit types (e.g. `seo`) from their `AGENTS.md`; existing
+commits stay as they are.
+
 ## v1.7.0 (2026-10-08)
 
 ### ⚠️ Libraries lock the minor version of their Actra dependencies

@@ -2,7 +2,7 @@
 
 ## 1. Commit messages
 
-[Conventional Commits](https://www.conventionalcommits.org) with a bullet list body:
+[Conventional Commits](https://www.conventionalcommits.org), short and clean:
 
 ```
 type(scope): summary in imperative mood, lowercase, no period
@@ -14,15 +14,38 @@ type(scope): summary in imperative mood, lowercase, no period
 Attention: What users of the code must know or do, if anything.
 ```
 
-- **type:** `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`
-- **scope:** the affected area or module (`form`, `session`, `db`), optional
+- **type:**
+    - `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`
+    - `content`: editorial changes in websites and CMS projects without code change (texts of pages and blog posts,
+      images, downloads, translations of content). `docs` stays for documentation of the project, `feat`/`fix` for
+      changed behaviour; mixing content into these types hides real changes and inflates releases.
+    - No further project-specific types: a topic like SEO is a scope (`feat(seo): add structured data for events`,
+      `content(seo): shorten meta descriptions of the blog`). New types would make histories of projects differ.
+- **scope:** the affected area or module (`form`, `session`, `db`, `seo`, `blog`), optional
 - `!` after the scope for breaking changes: `feat(form)!: require a label for all fields`
-- The empty line after the subject is required, otherwise Git treats the whole message as subject.
-- The body lists the actual changes as `- ` bullets, in imperative mood.
-- The optional `Attention:` paragraph explains what consumers must adapt or watch out for.
-- Subject line up to 72 characters if possible.
+- Subject line up to 72 characters if possible. It says what changes, not which files.
+- Body:
+    - The empty line after the subject is required, otherwise Git treats the whole message as subject.
+    - The body lists the changes as `- ` bullets, in imperative mood, one line per bullet if possible.
+    - Omit the body if the subject already says everything (a single, self-explanatory change). Do not repeat the
+      subject or list every touched file.
+    - The optional `Attention:` paragraph explains what consumers must adapt or watch out for. It is
+      required for breaking changes.
 - One topic per commit. Formatting changes of unrelated code go into their own `style` commit.
 - Commit messages never contain secrets, customer names or personal data.
+
+Examples:
+
+```
+content(blog): fix typos in the post about the new office
+```
+
+```
+content: update the team page
+
+- Add two new team members with photos
+- Replace the group photo
+```
 
 ## 2. Branches and history
 
