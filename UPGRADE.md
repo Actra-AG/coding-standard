@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.9.1 (2026-10-09)
+
+- The rules on mandatory rules, defaults and project deviations moved from `README.md` to [AGENTS.md](AGENTS.md),
+  "Standards", so projects load them.
+
 ## v1.9.0 (2026-10-09)
 
 - Short `README.md` with details in `docs/`, short `UPGRADE.md` entries; older sections may move to

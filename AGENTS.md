@@ -18,6 +18,10 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   only.
 - Explicit comparisons only: always `=== null` / `!== null` (never `is_null()`), never `isset()`, never `empty()`, never
   `==` (see [php.md](standards/php.md), section 5).
+- Imperative rules ("do", "never", "always") are mandatory. "Prefer" and "should" mark defaults: deviate only with a
+  reason that you can name in the code review.
+- Projects may add stricter or project-specific rules in their own `AGENTS.md`, but do not weaken or repeat these
+  rules. A project that must deviate says so explicitly in its own `AGENTS.md`, with the reason.
 - Leave every file you touch cleaner than you found it, but keep each change focused on one topic. Do not reformat
   unrelated code.
 - Run `composer check` (code style, PHPStan, tests) before finishing a task (see [tooling.md](standards/tooling.md));
