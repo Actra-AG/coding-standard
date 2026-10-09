@@ -15,9 +15,10 @@
 
 ## 2. JavaScript
 
-- Vanilla JavaScript as ES modules. No framework, external library or build step without a reason agreed with the
-  team.
-- One module per purpose, attached to elements via `data-*` attributes, no global variables.
+- Vanilla JavaScript in `src/js/`, one file per purpose, each wrapped in a block (`{ … }`) so it declares no global
+  variables. The files are concatenated and minified into `public/js/scripts.min.js` (see section 4), so they use no
+  `import`. No framework or external library without a reason agreed with the team.
+- Attached to elements via `data-*` attributes.
 - Progressive enhancement only: the page works without JavaScript, JavaScript improves it.
 - No inline `<script>` without a CSP nonce. No `eval()`, `new Function()` or `innerHTML` with untrusted data; use
   `textContent` and DOM methods.
@@ -27,9 +28,25 @@
 
 ## 3. CSS
 
-- Plain CSS with custom properties (`--clr-primary`) for colours, spacing and other shared values. No preprocessor or
-  build step without a reason agreed with the team (as for JavaScript).
-- One file per block or component, imported by one entry file; class names in kebab-case (see
+- Plain CSS in `src/css/` with custom properties (`--clr-primary`) for colours, spacing and other shared values. No
+  preprocessor language (Sass, Less).
+- One file per block or component, imported by the entry file `src/css/styles.css`; class names in kebab-case (see
   [naming.md](naming.md)).
+- Modern CSS is allowed: the build adds fallbacks and prefixes for the browsers in `"browserslist": ["defaults"]`.
 - No inline styles (see section 1); state is shown with classes or attributes (`aria-current`, `[hidden]`), not set by
   JavaScript as style.
+
+## 4. Frontend build
+
+The same npm workflow in every project with own CSS or JavaScript: one request per asset type, modern CSS with
+fallbacks. Copy `package.json`, `postcss.config.js`, `stylelint.config.js` and `prettier.config.js` from the
+[templates](../templates).
+
+- CSS: PostCSS with `postcss-import` (one file), `postcss-preset-env` (browser support) and `cssnano` (minify) →
+  `public/css/styles.min.css`.
+- JavaScript: `uglify-js` → `public/js/scripts.min.js`.
+- npm scripts: `build`, `css`, `js`, `watch` (`chokidar` and `concurrently`), `lint` and `format` (`stylelint`,
+  `prettier`).
+- Built files are committed, so servers need no Node.js. Run `npm run build` before committing; never edit them by
+  hand.
+- Cache busting with a version query that changes with every build of the file (`/css/styles.min.css?v=20260922`).

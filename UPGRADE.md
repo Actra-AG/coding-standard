@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.11.0 (2026-10-09)
+
+- Shared frontend build: CSS from `src/css/` with PostCSS, JavaScript from `src/js/` with uglify-js, built files
+  committed, cache busting with `?v=` ([html-javascript.md](standards/html-javascript.md), section 4; new templates
+  `package.json`, `postcss.config.js`, `stylelint.config.js`, `prettier.config.js`).
+- JavaScript files are concatenated instead of loaded as ES modules: wrap each file in a block when it is changed.
+- Projects with this workflow remove it as deviation from their `AGENTS.md`.
+
 ## v1.10.0 (2026-10-09)
 
 - ⚠️ Plans, designs and handover notes live in `docs/plans/<topic>/` ([AGENTS.md](AGENTS.md), "Working on a task").

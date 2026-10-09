@@ -1,0 +1,29 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "npm run css && npm run js",
+    "css": "postcss src/css/styles.css -o public/css/styles.min.css",
+    "js": "uglifyjs src/js/*.js -o public/js/scripts.min.js",
+    "watch": "concurrently npm:watch:css npm:watch:js",
+    "watch:css": "chokidar 'src/css/**/*.css' -c 'npm run css'",
+    "watch:js": "chokidar 'src/js/**/*.js' -c 'npm run js'",
+    "lint": "stylelint 'src/css/**/*.css' && prettier --check src",
+    "format": "stylelint --fix 'src/css/**/*.css' && prettier --write src"
+  },
+  "devDependencies": {
+    "chokidar-cli": "3.0.0",
+    "concurrently": "9.2.4",
+    "cssnano": "8.0.1",
+    "postcss": "8.5.26",
+    "postcss-cli": "11.0.1",
+    "postcss-import": "16.1.1",
+    "postcss-preset-env": "11.3.0",
+    "prettier": "3.8.3",
+    "stylelint": "17.12.0",
+    "stylelint-config-standard": "40.0.0",
+    "uglify-js": "3.19.3"
+  },
+  "browserslist": [
+    "defaults"
+  ]
+}

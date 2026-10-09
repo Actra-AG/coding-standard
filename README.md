@@ -19,7 +19,8 @@ This repository is public: rules only, never project data, credentials, hostname
    composer require --dev actra/coding-standard
    ```
 2. Copy the files from [templates/](templates) into the project root and adapt them (project part of
-   `AGENTS.md`, license in the header of `.php-cs-fixer.dist.php`).
+   `AGENTS.md`, license in the header of `.php-cs-fixer.dist.php`). The npm files only for projects with own CSS or
+   JavaScript ([html-javascript.md](standards/html-javascript.md), section 4).
 3. Add the Composer scripts from [tooling.md](standards/tooling.md) and make `composer check` green (PHPStan baseline
    for legacy code). Projects with request and session objects also include
    [phpstan-no-superglobals.neon](config/phpstan-no-superglobals.neon).
