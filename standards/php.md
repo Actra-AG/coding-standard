@@ -70,9 +70,9 @@ Every comparison says exactly what it checks. Implicit checks hide typos, treat 
 
 - **Always `=== null` / `!== null`, never `is_null()`.**
 - **Never `isset()`**, in any form (variables, array keys, properties, superglobals):
-    - array keys: `array_key_exists(key: 'name', array: $data)`, followed by a type check of the value,
-    - nullable values: `$value !== null`,
-    - variables and properties: always initialize and type them, so they exist.
+  - array keys: `array_key_exists(key: 'name', array: $data)`, followed by a type check of the value,
+  - nullable values: `$value !== null`,
+  - variables and properties: always initialize and type them, so they exist.
 - **Never `empty()`**: compare with the concrete empty value: `$value === ''`, `$items === []`, `$count === 0`.
 - Strict comparisons only (`===`, `!==`), never `==` / `!=`. `in_array()` and `array_search()` with `strict: true`.
 - Conditions are booleans: `if ($items !== [])`, not `if ($items)` or `if (count($items))`.

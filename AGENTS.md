@@ -7,11 +7,11 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 ## Standards
 
 - Follow the coding standard in [standards/](standards). It is binding for all new and changed code:
-    - [formatting.md](standards/formatting.md), [naming.md](standards/naming.md), [php.md](standards/php.md)
-    - [security.md](standards/security.md), [html-javascript.md](standards/html-javascript.md),
-      [i18n.md](standards/i18n.md)
-    - [testing.md](standards/testing.md), [tooling.md](standards/tooling.md)
-    - [versioning.md](standards/versioning.md), [git.md](standards/git.md)
+  - [formatting.md](standards/formatting.md), [naming.md](standards/naming.md), [php.md](standards/php.md)
+  - [security.md](standards/security.md), [html-javascript.md](standards/html-javascript.md),
+    [i18n.md](standards/i18n.md)
+  - [testing.md](standards/testing.md), [tooling.md](standards/tooling.md)
+  - [versioning.md](standards/versioning.md), [git.md](standards/git.md)
 - Key rules: PER Coding Style, `declare(strict_types=1);` and the copyright header in every PHP file, `final` by
   default, fully typed, no `mixed` in own code, enums for every fixed set of values, named arguments, one purpose per
   class, pure logic separated from I/O, validate input at the boundary, escape output by default, bound SQL parameters

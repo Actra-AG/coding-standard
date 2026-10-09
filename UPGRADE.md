@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.12.0 (2026-10-09)
+
+- Indentation is 2 spaces by default, 4 spaces only for PHP and NEON ([formatting.md](standards/formatting.md),
+  section 2). Update `.editorconfig` from the [template](templates/.editorconfig); existing files are reformatted when
+  they are changed.
+- Tests of applications without vendor namespace use `tests\Unit\…` ([testing.md](standards/testing.md), section 1).
+
 ## v1.11.0 (2026-10-09)
 
 - Shared frontend build: CSS from `src/css/` with PostCSS, JavaScript from `src/js/` with uglify-js, built files

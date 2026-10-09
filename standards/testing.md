@@ -11,8 +11,9 @@ tests/
 phpunit.xml
 ```
 
-- Namespace and directory of a test mirror `src/`: `<vendor>\<package>\tests\Unit\datacheck\…` in
-  `tests/Unit/datacheck/` tests `<vendor>\<package>\datacheck\…`.
+- Namespace and directory of a test mirror the tested code: `<vendor>\<package>\tests\Unit\datacheck\…` in
+  `tests/Unit/datacheck/` tests `<vendor>\<package>\datacheck\…`. Applications without vendor namespace use
+  `tests\Unit\…`: `tests\Unit\model\…` tests `app\model\…`.
 - PHPUnit (current major version). Data providers and other metadata via attributes (`#[DataProvider]`, `#[Test]` is
   not needed with the `test` prefix), no annotations.
 - Test classes are `final`. Data providers are `public static` and return `iterable` with named cases.

@@ -15,22 +15,22 @@ Attention: What users of the code must know or do, if anything.
 ```
 
 - **type:**
-    - `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`
-    - `content`: editorial changes in websites and CMS projects without code change (texts of pages and blog posts,
-      images, downloads, translations of content). `docs` stays for documentation of the project, `feat`/`fix` for
-      changed behaviour; mixing content into these types hides real changes and inflates releases.
-    - No further project-specific types: a topic like SEO is a scope (`feat(seo): add structured data for events`,
-      `content(seo): shorten meta descriptions of the blog`). New types would make histories of projects differ.
+  - `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`
+  - `content`: editorial changes in websites and CMS projects without code change (texts of pages and blog posts,
+    images, downloads, translations of content). `docs` stays for documentation of the project, `feat`/`fix` for
+    changed behaviour; mixing content into these types hides real changes and inflates releases.
+  - No further project-specific types: a topic like SEO is a scope (`feat(seo): add structured data for events`,
+    `content(seo): shorten meta descriptions of the blog`). New types would make histories of projects differ.
 - **scope:** the affected area or module (`form`, `session`, `db`, `seo`, `blog`), optional
 - `!` after the scope for breaking changes: `feat(form)!: require a label for all fields`
 - Subject line up to 72 characters if possible. It says what changes, not which files.
 - Body:
-    - The empty line after the subject is required, otherwise Git treats the whole message as subject.
-    - The body lists the changes as `- ` bullets, in imperative mood, one line per bullet if possible.
-    - Omit the body if the subject already says everything (a single, self-explanatory change). Do not repeat the
-      subject or list every touched file.
-    - The optional `Attention:` paragraph explains what consumers must adapt or watch out for. It is
-      required for breaking changes.
+  - The empty line after the subject is required, otherwise Git treats the whole message as subject.
+  - The body lists the changes as `- ` bullets, in imperative mood, one line per bullet if possible.
+  - Omit the body if the subject already says everything (a single, self-explanatory change). Do not repeat the
+    subject or list every touched file.
+  - The optional `Attention:` paragraph explains what consumers must adapt or watch out for. It is
+    required for breaking changes.
 - One topic per commit. Formatting changes of unrelated code go into their own `style` commit.
 - Commit messages never contain secrets, customer names or personal data.
 
@@ -50,10 +50,10 @@ content: update the team page
 ## 2. Branches and history
 
 - Keep the history linear and clean. **Never create merge commits** that join separate lines of history.
-    - Update a branch by rebasing it onto `main` (`git rebase main`), not by merging `main` into it.
-    - Integrate a branch with a fast-forward merge (`git merge --ff-only`) after rebasing, or with "Rebase and merge"
-      in pull requests. Disable merge commits in the repository settings and require a linear history for `main`.
-    - Pull with rebase (`git pull --rebase`, or `git config pull.rebase true`).
+  - Update a branch by rebasing it onto `main` (`git rebase main`), not by merging `main` into it.
+  - Integrate a branch with a fast-forward merge (`git merge --ff-only`) after rebasing, or with "Rebase and merge"
+    in pull requests. Disable merge commits in the repository settings and require a linear history for `main`.
+  - Pull with rebase (`git pull --rebase`, or `git config pull.rebase true`).
 - `main` is always releasable and green (`composer check`).
 - Prefer short development cycles: short-lived branches with one topic, integrated and released soon (see
   [versioning.md](versioning.md)).

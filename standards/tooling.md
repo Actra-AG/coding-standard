@@ -72,11 +72,11 @@ Every task and every commit must end with a green `composer check`.
   baseline. Analysed paths include all PHP code (`src/`, `tests/`, application code). Only generated code (caches,
   generated data files) is excluded. Do not lower the level, disable rules or add exclusions for hand-written code.
 - **Baseline for legacy code:** existing errors go into `phpstan-baseline.neon`.
-    - New files must not appear in the baseline. `tests/` never has baseline entries.
-    - When you change an existing file, fix its baseline entries and regenerate the baseline. The baseline may only
-      shrink.
-    - `@phpstan-ignore` is only allowed with an identifier and a reason, e.g.
-      `// @phpstan-ignore argument.type (PDO returns mixed, value validated above)`.
+  - New files must not appear in the baseline. `tests/` never has baseline entries.
+  - When you change an existing file, fix its baseline entries and regenerate the baseline. The baseline may only
+    shrink.
+  - `@phpstan-ignore` is only allowed with an identifier and a reason, e.g.
+    `// @phpstan-ignore argument.type (PDO returns mixed, value validated above)`.
 - A deliberately allowed exception of a disallowed call (e.g. reading `$_POST` in the request layer of a framework) is
   configured with `allowIn` for the specific path in the project's `phpstan.neon`, never with a global switch.
 - **Opt-in: no superglobals.** Projects whose framework has request and session objects (yuf, Craft CMS / Yii,

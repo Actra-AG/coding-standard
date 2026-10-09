@@ -21,7 +21,8 @@ the tool cannot check yet are checked in the review.
 
 ## 2. Spacing and indentation
 
-- Indentation: 4 spaces, no tabs.
+- Indentation with spaces, no tabs: 2 spaces by default (HTML, CSS, JavaScript, JSON, YAML, Markdown; Prettier
+  default), 4 spaces for PHP (PER Coding Style) and NEON.
 - Soft line limit: 120 characters. Break longer statements, argument lists and conditions over multiple lines, one item
   per line, with a trailing comma in multi-line argument lists, parameter lists and arrays.
 - One blank line between methods and between logical blocks inside a method. No multiple blank lines in a row.
