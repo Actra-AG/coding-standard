@@ -34,8 +34,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 
 - Prefer short development cycles: small, focused changes that can be released soon.
 - Before changing behaviour, write down (or test) what the existing code does, so no feature gets lost.
-- Larger refactorings are done one area at a time. Plans and handover notes live in `docs/<topic>/plan.md`; follow the
-  plan and append handover notes there.
+- Larger refactorings are done one area at a time. Plans, designs and handover notes live in `docs/plans/<topic>/`
+  (`docs/plans/forms/plan.md`), apart from the user docs in `docs/`; follow the plan and append handover notes there.
 - Mention assumptions. Ask when a requirement is ambiguous and the answer changes the result.
 - Before adding a rule to the `AGENTS.md` or the standards of a project, decide whether it applies to every Actra
   project. If so, add it to this coding standard instead (with a release), and keep only the project-specific part in
@@ -78,4 +78,5 @@ When asked to review changes before commit, inspect the changed files and answer
    project has none, say whether adding one would be useful.
 3. Suggest a commit message following [git.md](standards/git.md) and the style of previous commit messages.
 4. For versioned packages, check the existing Git tags (`git tag --sort=-v:refname`) and suggest the next release tag
-   (see [versioning.md](standards/versioning.md)).
+   (see [versioning.md](standards/versioning.md)). For a library with a skeleton project, say whether the skeleton
+   needs an update (see [versioning.md](standards/versioning.md), section 1).

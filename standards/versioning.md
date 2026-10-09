@@ -6,6 +6,10 @@
   changes for a big release. Small releases are easier to review, upgrade and roll back.
 - A version is released with a commit: the commit that completes the change also adds its `UPGRADE.md` section with
   version and date (see section 6) and is tagged with that version.
+- A library with a skeleton or template project (the starting point of `composer create-project`) checks on every
+  release whether the skeleton needs an update: the constraint for a new major version, code affected by a ⚠️ entry
+  of `UPGRADE.md`, setup or settings changed in the docs. Report the result; if it needs an update, give the prompt
+  for a separate session in the skeleton project. The project's `AGENTS.md` names the skeleton.
 
 ## 2. Versions
 

@@ -22,7 +22,8 @@ This project follows the Actra coding standard, installed as development depende
 
 - Allowed dependencies and tools (if stricter than the global standard).
 - Architecture rules, important directories and their purpose.
-- How to run and check the application (URL of the DDEV site, example app, …).
+- How to run and check the application (URL of the DDEV site, example app and its URL, …).
+- Libraries: the skeleton or template project for `composer create-project`, if any.
 
 ## Deviations from the global standard
 

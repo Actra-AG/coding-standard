@@ -96,4 +96,4 @@ PHPStan reports violations of these rules (see [tooling.md](tooling.md)).
 - Comments explain *why*, not *what*. Keep them short.
 - Class PHPDoc: one or two sentences about the purpose, when the name alone is not enough.
 - No PHPDoc that repeats the signature (`@param string $name The name`).
-- No dead code, no commented-out code, no `TODO` without a linked task (issue or `docs/<topic>/plan.md`).
+- No dead code, no commented-out code, no `TODO` without a linked task (issue or `docs/plans/<topic>/plan.md`).

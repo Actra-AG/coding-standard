@@ -3,6 +3,16 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.10.0 (2026-10-09)
+
+- ⚠️ Plans, designs and handover notes live in `docs/plans/<topic>/` ([AGENTS.md](AGENTS.md), "Working on a task").
+  Move `docs/<topic>/` plans to `docs/plans/<topic>/`; libraries replace `/docs/*/plan.md export-ignore` in
+  `.gitattributes` with `/docs/plans/ export-ignore`.
+- Libraries with an example app check routing, views and assets there in the browser
+  ([testing.md](standards/testing.md), section 2).
+- Libraries with a skeleton project check it on every release ([versioning.md](standards/versioning.md), section 1).
+- Name the example app with URL and the skeleton in the project's `AGENTS.md`.
+
 ## v1.9.1 (2026-10-09)
 
 - The rules on mandatory rules, defaults and project deviations moved from `README.md` to [AGENTS.md](AGENTS.md),

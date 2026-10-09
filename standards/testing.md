@@ -29,8 +29,9 @@ phpunit.xml
   types from external input.
 - Code that needs a real database or HTTP is kept thin and tested via its pure parts; integration tests are optional
   and must not depend on external services or real data.
-- Libraries without an own running app (no example app) check changes of views, templates, generated HTML and assets
-  in a consuming project that uses the library checkout as Composer path repository (`"type": "path"`).
+- A library with its own example app checks changes of routing, views, templates, generated HTML and assets in that
+  app in the browser. Libraries without one check them in a consuming project that uses the library checkout as
+  Composer path repository (`"type": "path"`). The project's `AGENTS.md` names the app and its URL.
 
 ## 3. How to write tests
 
@@ -51,4 +52,4 @@ phpunit.xml
 3. `UPGRADE.md` lists every breaking change (libraries; projects without one decide whether to add it); `README.md`
    is updated where needed. Both stay short (see [versioning.md](versioning.md), section 6, and
    [AGENTS.md](../AGENTS.md), "Files").
-4. Handover notes are written in the plan (`docs/<topic>/plan.md`), if the task belongs to one.
+4. Handover notes are written in the plan (`docs/plans/<topic>/plan.md`), if the task belongs to one.
