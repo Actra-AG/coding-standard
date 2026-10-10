@@ -3,6 +3,17 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.19.0 (2026-10-10)
+
+- ⚠️ No backwards compatibility layers: libraries change APIs directly, without `@deprecated`, aliases or parallel old
+  and new APIs; consumers migrate with `UPGRADE.md` ([versioning.md](standards/versioning.md), section 4). Remove
+  deprecated code and compatibility layers when their area is changed next.
+- Prompts for library sessions ask for the cleanest API and a complete `UPGRADE.md` entry; parallel sessions never
+  write the same files, the reviewing session checks reported changes with `git diff` ([AGENTS.md](AGENTS.md),
+  "Working on a task").
+- Strict-types guard test: exclude local untracked directories and empty fixtures; projects with a whitelist
+  `.gitignore` may scan only their root files and tracked directories ([testing.md](standards/testing.md), section 2).
+
 ## v1.18.1 (2026-10-10)
 
 - The project's `AGENTS.md` only says whether template and CSS changes need a frontend review; it does not name the

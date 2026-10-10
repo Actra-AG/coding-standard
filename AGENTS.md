@@ -15,7 +15,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Key rules: PER Coding Style, `declare(strict_types=1);` and the copyright header in every PHP file, `final` by
   default, fully typed, no `mixed` in own code, enums for every fixed set of values, named arguments, one purpose per
   class, pure logic separated from I/O, validate input at the boundary, escape output by default, bound SQL parameters
-  only.
+  only, no backwards compatibility layers (change APIs directly, consumers migrate with `UPGRADE.md`, see
+  [versioning.md](standards/versioning.md), section 4).
 - Best possible performance is the first priority, after security and correctness: respond and return early, no
   queries in loops, cache wherever it saves noticeable time (see [performance.md](standards/performance.md)).
 - Security and performance improvements are on by default; features that need project data get a required argument
@@ -49,9 +50,12 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   each with a short note what changed; the QA of a plan collects them into one list.
 - Fix problems at their cause: when it lies in a library maintained by Actra (e.g. `actra/yuf`, `actra/backend`:
   bug, missing typed API or feature), add no local workaround (wrapper, cast, copy of library code) in the consuming
-  project. Describe the cause and write a complete prompt for the library's own session (goal, API proposal,
-  backwards compatibility, tests, `README.md`/`UPGRADE.md`). After the library release, the project raises its
+  project. Describe the cause and write a complete prompt for the library's own session (goal, the cleanest API
+  proposal, tests, `README.md` and a complete `UPGRADE.md` entry). After the library release, the project raises its
   constraint and migrates (see [versioning.md](standards/versioning.md), section 8).
+- Sessions working in parallel never write the same files (`UPGRADE.md`, a plan): they return the text and the
+  reviewing session merges it. The reviewing session checks every reported change with `git diff` instead of trusting
+  the report.
 - Mention assumptions. Ask when a requirement is ambiguous and the answer changes the result.
 - Before adding a rule to the `AGENTS.md` or the standards of a project, decide whether it applies to every Actra
   project. If so, add it to this coding standard instead (with a release), and keep only the project-specific part in

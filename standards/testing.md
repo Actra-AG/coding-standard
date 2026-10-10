@@ -35,12 +35,14 @@ phpunit.xml
   Composer path repository (`"type": "path"`). The project's `AGENTS.md` names the app and its URL.
 - Every project has a strict-types guard test: PHP-CS-Fixer only checks its configured paths, so a unit test scans
   every directory with PHP files (application code, tests, entry points in `public/`, scripts in `local/` or `bin/`,
-  config) and fails for any file without `declare(strict_types=1);`. Only dependencies and generated code (caches)
-  are excluded:
+  config) and fails for any file without `declare(strict_types=1);`. Only dependencies, generated code (caches),
+  local untracked directories (worktrees, scratch folders, old checkouts) and fixtures that must stay without it (a
+  0-byte file for a loader test, with a comment) are excluded. Projects with a whitelist `.gitignore` scan the root
+  files and their tracked directories instead of the whole root:
   ```php
   final class StrictTypesTest extends TestCase
   {
-      // Paths relative to the project root without own PHP code or with generated code
+      // Paths relative to the project root without own PHP code, with generated code or local untracked files
       private const array EXCLUDED = ['.ddev', '.git', 'node_modules', 'var/cache', 'vendor'];
 
       public function testEveryPhpFileDeclaresStrictTypes(): void

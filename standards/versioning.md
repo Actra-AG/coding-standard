@@ -46,12 +46,17 @@ Internal classes that are not meant for consumers are marked with `@internal`.
 A breaking change forces consumers to adapt their code or styling: renamed or removed class, method, argument or enum
 case, changed signature or return type, documented behaviour that no longer works as before, changed HTML output.
 
-- Breaking changes are allowed, but **no feature may be lost**: if something is removed, its replacement is
-  documented.
+- **No backwards compatibility layers:** change or remove the API directly. No `@deprecated`, no aliases, no old and
+  new API side by side, no properties or arguments kept only so old calls keep working, no adapters or shims. They
+  are noise and block new designs; consumers migrate with `UPGRADE.md`. Existing layers are removed when their area is
+  changed next.
+- Not compatibility layers: guards that make a misuse fail loudly (an override that throws for an untyped parent
+  method), verification of old stored data (legacy password hashes rehashed on login), stable values that callers
+  persist or compare (enum values, database values).
+- **No feature may be lost:** the replacement ships in the same release, or `UPGRADE.md` says how projects do it
+  themselves.
 - Every breaking change is listed in `UPGRADE.md`, marked with ⚠️, with a short before/after example.
 - Breaking changes are released as minor version (or as part of a major version, see section 2).
-- Prefer deprecating first (`@deprecated` with the replacement), when the old API can be kept with reasonable effort.
-  Deprecated code may be removed in any following minor version; there is no need to wait for a major version.
 
 ## 5. Bug fixes
 
