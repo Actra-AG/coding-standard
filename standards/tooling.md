@@ -133,3 +133,14 @@ Every task and every commit must end with a green `composer check`.
 
 - Every project has an `.editorconfig` (see [template](../templates/.editorconfig)).
 - IDE project files (`.idea/`, `.vscode/`) are not committed, except shared settings agreed with the team.
+
+## 7. Autoloading
+
+- Composer loads all classes, also the project's own: PSR-4 in `composer.json`, `autoload` for application code and
+  `autoload-dev` for tests. No second autoloader and no autoloader registration in the application or the tests.
+- Entry points (`public/index.php`, CLI scripts) include `vendor/autoload.php` first. The test bootstrap only includes
+  `vendor/autoload.php`. PHPStan needs no `scanDirectories` for own or Actra classes.
+- `composer dump-autoload --optimize --strict-psr` runs without warnings: file and class names match the namespace
+  mapping.
+- Composer is needed to build an application (`vendor/`), not on the server. Production uses an optimized
+  autoloader (see [performance.md](performance.md), section 3).

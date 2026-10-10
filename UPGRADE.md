@@ -3,6 +3,15 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.20.0 (2026-10-10)
+
+- ⚠️ Composer loads all classes ([tooling.md](standards/tooling.md), section 7): map the own namespace with PSR-4 in
+  `composer.json` (`autoload`, tests in `autoload-dev`), include `vendor/autoload.php` first in entry points, reduce
+  the test bootstrap to `vendor/autoload.php`, remove autoloader registrations and `scanDirectories` for own or Actra
+  classes, and remove `actra/autoloader` unless the code uses it directly. Then
+  `composer dump-autoload --optimize --strict-psr` must run without warnings.
+- Tests call assertions with `$this->assert*()` instead of `self::` ([testing.md](standards/testing.md), section 3).
+
 ## v1.19.0 (2026-10-10)
 
 - ⚠️ No backwards compatibility layers: libraries change APIs directly, without `@deprecated`, aliases or parallel old

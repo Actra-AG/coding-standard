@@ -4,7 +4,7 @@
 
 ```
 tests/
-  bootstrap.php   # sets up autoloading for src/ and tests/
+  bootstrap.php   # includes vendor/autoload.php only (see tooling.md, section 7)
   Unit/           # pure logic, no I/O, fast
   Integration/    # optional: code that needs a real database, file system or HTTP
   Double/         # hand-written test doubles (FixedClock, InMemorySession, …)
@@ -53,7 +53,7 @@ phpunit.xml
                   iterator: new RecursiveDirectoryIterator(directory: $root, flags: FilesystemIterator::SKIP_DOTS),
                   callback: static fn(SplFileInfo $file): bool => !in_array(
                       needle: substr(string: $file->getPathname(), offset: strlen(string: $root) + 1),
-                      haystack: self::EXCLUDED,
+                      haystack: StrictTypesTest::EXCLUDED,
                       strict: true,
                   ),
               ),
@@ -69,7 +69,7 @@ phpunit.xml
               }
           }
 
-          self::assertSame([], $missing);
+          $this->assertSame([], $missing);
       }
   }
   ```
@@ -79,6 +79,7 @@ phpunit.xml
 - Test names describe behaviour: `testRequiredRuleFailsForEmptyString()`.
 - One assertion topic per test. Use data providers for tables of cases.
 - Arrange – act – assert, separated by a blank line.
+- Assertions with `$this->assertSame(…)`, not `self::` (see [php.md](php.md), section 4), with positional arguments.
 - Tests are deterministic: no real clock (inject a `FixedClock`), no random values without fixed seed, no network,
   no dependency on execution order or on other tests.
 - Test doubles are small hand-written classes in `tests/Double/`, implementing the same interface as the production
