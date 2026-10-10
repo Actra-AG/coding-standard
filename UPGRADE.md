@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.18.1 (2026-10-10)
+
+- The project's `AGENTS.md` only says whether template and CSS changes need a frontend review; it does not name the
+  frontend developer or designer ([AGENTS.md](AGENTS.md), "Working on a task").
+
 ## v1.18.0 (2026-10-10)
 
 - ⚠️ New strict-types guard test: add the unit test that fails for PHP files without `declare(strict_types=1);`
