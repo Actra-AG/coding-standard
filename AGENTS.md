@@ -48,11 +48,16 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   naming them), every change of HTML templates or CSS needs their approval before it is released. The handover notes
   of the task (without a plan: the final report) list the changed templates and CSS files under "Frontend review",
   each with a short note what changed; the QA of a plan collects them into one list.
+- AI assistants never edit HTML template files, CSS or JavaScript; the frontend developer changes them manually. Write
+  each needed change as a task for the frontend developer (what, where, why) and list it under "Frontend review" in
+  the handover notes or the final report (see [html-javascript.md](standards/html-javascript.md)).
 - Fix problems at their cause: when it lies in a library maintained by Actra (e.g. `actra/yuf`, `actra/backend`:
   bug, missing typed API or feature), add no local workaround (wrapper, cast, copy of library code) in the consuming
   project. Describe the cause and write a complete prompt for the library's own session (goal, the cleanest API
   proposal, tests, `README.md` and a complete `UPGRADE.md` entry). After the library release, the project raises its
-  constraint and migrates (see [versioning.md](standards/versioning.md), section 8).
+  constraint and migrates (see [versioning.md](standards/versioning.md), section 8). Changed HTML output of a library
+  in a project is such a cause: the library restores the old output (see [versioning.md](standards/versioning.md),
+  section 4); the project adapts no templates, CSS or JavaScript to it.
 - Sessions working in parallel never write the same files (`UPGRADE.md`, a plan): they return the text and the
   reviewing session merges it. The reviewing session checks every reported change with `git diff` instead of trusting
   the report.

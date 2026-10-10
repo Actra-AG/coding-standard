@@ -53,6 +53,14 @@ case, changed signature or return type, documented behaviour that no longer work
 - Not compatibility layers: guards that make a misuse fail loudly (an override that throws for an untyped parent
   method), verification of old stored data (legacy password hashes rehashed on login), stable values that callers
   persist or compare (enum values, database values).
+- **Exception, generated HTML of libraries:** a library update keeps the look of existing output, because templates
+  and CSS of projects are changed manually by the frontend developer (see
+  [html-javascript.md](html-javascript.md)).
+  - Allowed without the frontend developer: changes that do not affect the layout (hidden inputs, form actions,
+    corrected attribute values such as `for`, `id`, `aria-*`).
+  - Not allowed: other elements, nesting, classes or visible texts in existing output.
+  - New markup only as opt-in (new renderer, new argument). A change of existing markup needs the frontend developer
+    first and an `UPGRADE.md` entry marked with ⚠️, with the HTML before and after.
 - **No feature may be lost:** the replacement ships in the same release, or `UPGRADE.md` says how projects do it
   themselves.
 - Every breaking change is listed in `UPGRADE.md`, marked with ⚠️, with a short before/after example.

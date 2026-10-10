@@ -3,6 +3,16 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.22.0 (2026-10-10)
+
+- ⚠️ AI assistants never edit HTML template files, CSS or JavaScript; they write tasks for the frontend developer
+  under "Frontend review" ([AGENTS.md](AGENTS.md), "Working on a task"). Check the project's `AGENTS.md` for rules
+  that let AI assistants edit them and remove them.
+- Libraries keep the look of existing generated HTML: only layout-neutral changes (hidden inputs, form actions,
+  attribute values), new markup as opt-in, other changes only with the frontend developer and a ⚠️ entry with before
+  and after ([versioning.md](standards/versioning.md), section 4). Projects build no workaround for changed library
+  output; the library restores it.
+
 ## v1.21.1 (2026-10-10)
 
 - Tests call `fail()`, `markTestSkipped()` and `markTestIncomplete()` by the test class name; static helpers throw a

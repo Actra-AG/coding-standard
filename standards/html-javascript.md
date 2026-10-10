@@ -1,5 +1,9 @@
 # HTML and JavaScript
 
+HTML template files, CSS and JavaScript are changed manually by the frontend developer. AI assistants never edit
+them: they write each needed change as a task for the frontend developer (what, where, why) and list it under
+"Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"). The rules below apply to every change of them.
+
 ## 1. HTML
 
 - Generated HTML (forms, tables, pagination, templates) works without JavaScript and is valid HTML5.
@@ -10,8 +14,8 @@
   [security.md](security.md), section 5).
 - No inline styles and no inline event handlers (`onclick`, …); they also conflict with the Content Security Policy.
 - CSS classes and `data-*` attributes in kebab-case (see [naming.md](naming.md)).
-- In public libraries, changes to generated HTML (markup, CSS classes, attributes) are breaking changes (see
-  [versioning.md](versioning.md)).
+- Libraries keep the look of their existing generated HTML; changes of it need the frontend developer first (see
+  [versioning.md](versioning.md), section 4).
 
 ## 2. JavaScript
 

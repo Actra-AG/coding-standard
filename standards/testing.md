@@ -100,5 +100,5 @@ phpunit.xml
    is updated where needed. Both stay short (see [versioning.md](versioning.md), section 6, and
    [AGENTS.md](../AGENTS.md), "Files").
 4. Handover notes are written in the plan (`docs/plans/<topic>/plan.md`), if the task belongs to one.
-5. Frontend changes in projects with a frontend developer or designer: the "Frontend review" list is written (see
-   [AGENTS.md](../AGENTS.md), "Working on a task").
+5. Frontend changes: the "Frontend review" list is written, with the tasks for the frontend developer and, in projects
+   with a frontend review, the changed templates and CSS files (see [AGENTS.md](../AGENTS.md), "Working on a task").
