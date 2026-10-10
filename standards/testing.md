@@ -80,6 +80,11 @@ phpunit.xml
 - One assertion topic per test. Use data providers for tables of cases.
 - Arrange – act – assert, separated by a blank line.
 - Assertions with `$this->assertSame(…)`, not `self::` (see [php.md](php.md), section 4), with positional arguments.
+- `fail()`, `markTestSkipped()` and `markTestIncomplete()` are called statically by the test class name, because
+  PHPStan rejects them as dynamic calls: `CurlRequestTest::markTestSkipped('No network in CI');`.
+- Static helpers (used by static data providers or static closures) do not assert: they throw a `LogicException` for
+  an unexpected value (`throw new LogicException(message: 'Fixture missing: ' . $path);`). A helper only called from
+  test methods is non-static and asserts.
 - Tests are deterministic: no real clock (inject a `FixedClock`), no random values without fixed seed, no network,
   no dependency on execution order or on other tests.
 - Test doubles are small hand-written classes in `tests/Double/`, implementing the same interface as the production

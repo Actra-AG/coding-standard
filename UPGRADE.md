@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.20.1 (2026-10-10)
+
+- Tests call `fail()`, `markTestSkipped()` and `markTestIncomplete()` by the test class name; static helpers throw a
+  `LogicException` instead of asserting ([testing.md](standards/testing.md), section 3).
+
 ## v1.20.0 (2026-10-10)
 
 - ⚠️ Composer loads all classes ([tooling.md](standards/tooling.md), section 7): map the own namespace with PSR-4 in
