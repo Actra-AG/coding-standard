@@ -41,8 +41,8 @@ correctness come before it: never trade them for speed.
 
 ## 5. Frontend
 
-- One minified CSS and one minified JavaScript file (see [html-javascript.md](html-javascript.md), section 4),
-  scripts with `defer`.
+- One minified CSS and one minified JavaScript file per area (see [html-javascript.md](html-javascript.md),
+  section 4), scripts with `defer`.
 - Images in the displayed size and a modern format (WebP, AVIF), with `width` and `height`; `loading="lazy"` below
   the fold.
 - Fonts self-hosted as WOFF2 with `font-display: swap`; preload only what the first screen needs.

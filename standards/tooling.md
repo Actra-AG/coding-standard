@@ -118,6 +118,8 @@ Every task and every commit must end with a green `composer check`.
   run `composer check` afterwards (PHPStan also reports code that does not compile, e.g. a positional argument after a
   named argument). Do not commit files that PHP-CS-Fixer skipped because of lint errors.
 - Do not disable rules in the project. If a rule is wrong for all projects, change it here.
+- PHP-CS-Fixer only checks the paths of its `Finder`; the strict-types guard test checks every PHP file of the
+  project (see [testing.md](testing.md), section 2).
 - `.php-cs-fixer.cache` is not committed.
 
 ## 5. Local environment (DDEV)

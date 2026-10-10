@@ -3,6 +3,18 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.18.0 (2026-10-10)
+
+- ⚠️ New strict-types guard test: add the unit test that fails for PHP files without `declare(strict_types=1);`
+  outside the PHP-CS-Fixer paths ([testing.md](standards/testing.md), section 2) and fix the files it reports.
+- JavaScript that imports ES modules from Composer libraries (actra/backend) is bundled per area with esbuild
+  ([html-javascript.md](standards/html-javascript.md), sections 2 and 4). Projects that need it copy the `js:backend`
+  script and `esbuild` from the [template](templates/package.json); own files without `import` stay concatenated.
+- Projects with a frontend developer or designer name them in their `AGENTS.md`; template and CSS changes need their
+  approval, listed under "Frontend review" ([AGENTS.md](AGENTS.md), "Working on a task").
+- Problems caused by Actra libraries are fixed in the library, not worked around in the project
+  ([AGENTS.md](AGENTS.md), "Working on a task").
+
 ## v1.17.0 (2026-10-09)
 
 - ⚠️ [config/php-cs-fixer-header.php](config/php-cs-fixer-header.php) requires `copyright:` (the text after

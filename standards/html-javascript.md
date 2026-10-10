@@ -15,9 +15,13 @@
 
 ## 2. JavaScript
 
-- Vanilla JavaScript in `src/js/`, one file per purpose, each wrapped in a block (`{ … }`) so it declares no global
-  variables. The files are concatenated and minified into `public/js/scripts.min.js` (see section 4), so they use no
-  `import`. No framework or external library without a reason agreed with the team.
+- Vanilla JavaScript in `src/js/`, one file per purpose. No framework or external library without a reason agreed
+  with the team.
+- Files directly in `src/js/` are concatenated (see section 4), so they use no `import` and are each wrapped in a block
+  (`{ … }`) so they declare no global variables.
+- Exception: an area (e.g. the backend) whose JavaScript imports ES modules from Composer libraries (actra/backend
+  ships `src/assets/js/backend.js`) is bundled with esbuild from the entry file `src/js/<area>/scripts.js`; the files
+  of that area are ES modules.
 - Attached to elements via `data-*` attributes.
 - Progressive enhancement only: the page works without JavaScript, JavaScript improves it.
 - No inline `<script>` without a CSP nonce. No `eval()`, `new Function()` or `innerHTML` with untrusted data; use
@@ -39,12 +43,17 @@
 ## 4. Frontend build
 
 The same npm workflow in every project with own CSS or JavaScript, for performance (one minified file and request
-per asset type, see [performance.md](performance.md)) and modern CSS with fallbacks. Copy `package.json`,
+per asset type and area, see [performance.md](performance.md)) and modern CSS with fallbacks. Copy `package.json`,
 `postcss.config.js`, `stylelint.config.js` and `prettier.config.js` from the [templates](../templates).
 
 - CSS: PostCSS with `postcss-import` (one file), `postcss-preset-env` (browser support) and `cssnano` (minify) →
   `public/css/styles.min.css`.
-- JavaScript: `uglify-js` → `public/js/scripts.min.js`.
+- JavaScript: `uglify-js` → `public/js/scripts.min.js` (npm script `js`) for own files without `import`.
+- JavaScript that imports ES modules from `vendor/` (relative paths, e.g.
+  `../../../vendor/actra/backend/src/assets/js/backend.js`): one esbuild bundle per area,
+  `esbuild src/js/<area>/scripts.js --bundle --minify --outfile=public/js/<area>/scripts.min.js` (npm script
+  `js:backend` in the template). Add it to `build` and `watch:js`; projects without such a bundle remove the script
+  and `esbuild`.
 - npm scripts: `build`, `css`, `js`, `watch` (`chokidar` and `concurrently`), `lint` and `format` (`stylelint`,
   `prettier`).
 - Built files are committed, so servers need no Node.js. Run `npm run build` before committing; never edit them by

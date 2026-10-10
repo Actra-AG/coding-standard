@@ -33,6 +33,44 @@ phpunit.xml
 - A library with its own example app checks changes of routing, views, templates, generated HTML and assets in that
   app in the browser. Libraries without one check them in a consuming project that uses the library checkout as
   Composer path repository (`"type": "path"`). The project's `AGENTS.md` names the app and its URL.
+- Every project has a strict-types guard test: PHP-CS-Fixer only checks its configured paths, so a unit test scans
+  every directory with PHP files (application code, tests, entry points in `public/`, scripts in `local/` or `bin/`,
+  config) and fails for any file without `declare(strict_types=1);`. Only dependencies and generated code (caches)
+  are excluded:
+  ```php
+  final class StrictTypesTest extends TestCase
+  {
+      // Paths relative to the project root without own PHP code or with generated code
+      private const array EXCLUDED = ['.ddev', '.git', 'node_modules', 'var/cache', 'vendor'];
+
+      public function testEveryPhpFileDeclaresStrictTypes(): void
+      {
+          $root = dirname(path: __DIR__, levels: 2);
+          $files = new RecursiveIteratorIterator(
+              iterator: new RecursiveCallbackFilterIterator(
+                  iterator: new RecursiveDirectoryIterator(directory: $root, flags: FilesystemIterator::SKIP_DOTS),
+                  callback: static fn(SplFileInfo $file): bool => !in_array(
+                      needle: substr(string: $file->getPathname(), offset: strlen(string: $root) + 1),
+                      haystack: self::EXCLUDED,
+                      strict: true,
+                  ),
+              ),
+          );
+          $missing = [];
+          foreach ($files as $file) {
+              if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
+                  continue;
+              }
+              $code = file_get_contents(filename: $file->getPathname());
+              if ($code === false || preg_match(pattern: '/^declare\(strict_types=1\);$/m', subject: $code) !== 1) {
+                  $missing[] = $file->getPathname();
+              }
+          }
+
+          self::assertSame([], $missing);
+      }
+  }
+  ```
 
 ## 3. How to write tests
 
@@ -54,3 +92,5 @@ phpunit.xml
    is updated where needed. Both stay short (see [versioning.md](versioning.md), section 6, and
    [AGENTS.md](../AGENTS.md), "Files").
 4. Handover notes are written in the plan (`docs/plans/<topic>/plan.md`), if the task belongs to one.
+5. Frontend changes in projects with a frontend developer or designer: the "Frontend review" list is written (see
+   [AGENTS.md](../AGENTS.md), "Working on a task").
