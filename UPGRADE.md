@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.23.0 (2026-10-10)
+
+- AI assistants may change attributes in HTML templates without visible effect (`data-*`, `aria-*`, `id`/`for`,
+  `name`, form attributes, URLs and texts filled from PHP) when no CSS selector matches them; listed under "Frontend
+  review" as "attribute only, no visible effect" ([html-javascript.md](standards/html-javascript.md)).
+- Hidden inputs in generated HTML of libraries are layout-neutral only before the visible content or as last child of
+  the form ([versioning.md](standards/versioning.md), section 4).
+
 ## v1.22.0 (2026-10-10)
 
 - ⚠️ AI assistants never edit HTML template files, CSS or JavaScript; they write tasks for the frontend developer

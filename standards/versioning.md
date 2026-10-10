@@ -56,8 +56,9 @@ case, changed signature or return type, documented behaviour that no longer work
 - **Exception, generated HTML of libraries:** a library update keeps the look of existing output, because templates
   and CSS of projects are changed manually by the frontend developer (see
   [html-javascript.md](html-javascript.md)).
-  - Allowed without the frontend developer: changes that do not affect the layout (hidden inputs, form actions,
-    corrected attribute values such as `for`, `id`, `aria-*`).
+  - Allowed without the frontend developer: changes that do not affect the layout (form actions, corrected attribute
+    values such as `for`, `id`, `aria-*`). Hidden inputs only where no sibling selector sees them (e.g.
+    `.form>:not([type=hidden])+*`): before the visible content or as last child of the form.
   - Not allowed: other elements, nesting, classes or visible texts in existing output.
   - New markup only as opt-in (new renderer, new argument). A change of existing markup needs the frontend developer
     first and an `UPGRADE.md` entry marked with ⚠️, with the HTML before and after.

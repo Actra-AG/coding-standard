@@ -50,7 +50,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   each with a short note what changed; the QA of a plan collects them into one list.
 - AI assistants never edit HTML template files, CSS or JavaScript; the frontend developer changes them manually. Write
   each needed change as a task for the frontend developer (what, where, why) and list it under "Frontend review" in
-  the handover notes or the final report (see [html-javascript.md](standards/html-javascript.md)).
+  the handover notes or the final report. Only exception: attributes in templates without visible effect (`data-*`,
+  `aria-*`, `id`/`for`, `name`, form attributes, URLs and texts filled from PHP) that no CSS selector matches (see
+  [html-javascript.md](standards/html-javascript.md)).
 - Fix problems at their cause: when it lies in a library maintained by Actra (e.g. `actra/yuf`, `actra/backend`:
   bug, missing typed API or feature), add no local workaround (wrapper, cast, copy of library code) in the consuming
   project. Describe the cause and write a complete prompt for the library's own session (goal, the cleanest API

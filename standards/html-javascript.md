@@ -4,6 +4,19 @@ HTML template files, CSS and JavaScript are changed manually by the frontend dev
 them: they write each needed change as a task for the frontend developer (what, where, why) and list it under
 "Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"). The rules below apply to every change of them.
 
+Exception: AI assistants may add, change or remove attributes in HTML templates without the frontend developer's
+approval when the change has no visible effect.
+
+- Allowed: `data-*` attributes read by JavaScript (`data-form="main form"`), `aria-*` attributes, `id`/`for` pairs,
+  `name`, `autocomplete`, form attributes (`action`, `method`, `novalidate`) and attribute values that are URLs or
+  texts filled from PHP.
+- Not allowed: `class`, `style`, `hidden`, elements of any kind, any change of CSS or JavaScript files. Hidden inputs
+  are elements too: they change sibling selectors such as `.form>:not([type=hidden])+*`.
+- Check before: no CSS selector of the project or its libraries matches the attribute (attribute selectors such as
+  `[data-action]`, `[aria-expanded]`); otherwise it is a task for the frontend developer.
+- The change is still listed under "Frontend review" with the note "attribute only, no visible effect", so the
+  frontend developer sees it.
+
 ## 1. HTML
 
 - Generated HTML (forms, tables, pagination, templates) works without JavaScript and is valid HTML5.
