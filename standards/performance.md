@@ -16,6 +16,10 @@ correctness come before it: never trade them for speed.
 
 - No queries in loops (N+1): load related data with a `JOIN` or one `IN (…)` query.
 - Select only the needed columns, no `SELECT *`. Filter, sort, aggregate and paginate in SQL, not in PHP.
+- A sorted or paginated query ends its `ORDER BY` with a unique column (usually the primary key), so rows with equal
+  sort values keep a stable order across pages and requests (MariaDB returns them in an undefined order). Otherwise
+  rows can appear twice or be missing between pages, and a CSV export may differ from the screen. Tables of
+  `actra/yuf` use `DbResultTable::addSortTieBreaker()` (from yuf v6.3.0).
 - Index the columns used in `WHERE`, `JOIN` and `ORDER BY`; check new queries on large tables with `EXPLAIN`.
 - Write many rows in one statement or one transaction.
 

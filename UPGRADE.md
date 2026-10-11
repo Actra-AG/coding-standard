@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.25.0 (2026-10-11)
+
+- Sorted or paginated queries end their `ORDER BY` with a unique column, usually the primary key (yuf tables:
+  `DbResultTable::addSortTieBreaker()`, from yuf v6.3.0) ([performance.md](standards/performance.md), section 2).
+  Existing queries are migrated when their code is changed.
+
 ## v1.24.0 (2026-10-11)
 
 - ⚠️ `readonly` is also the write-once guarantee for properties set once after construction; do not replace it with
