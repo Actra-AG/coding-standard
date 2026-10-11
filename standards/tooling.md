@@ -66,7 +66,10 @@ Every task and every commit must end with a green `composer check`.
 
 - `phpstan.neon` in the project root includes the shared configuration
   [config/phpstan.neon](../config/phpstan.neon) (see [template](../templates/phpstan.neon)). It sets `level: 10`,
-  bleeding edge, all strict parameters and the extensions listed above.
+  bleeding edge, all strict parameters and the extensions listed above. It ignores
+  `property.readOnlyAssignNotInConstructor` and `property.uninitializedReadonly`, because a native `readonly`
+  property may be assigned once after construction (see [php.md](php.md), section 3); projects do not ignore them
+  again.
   [config/disallowed.neon](../config/disallowed.neon) forbids the constructs banned by this standard.
 - The project only adds `phpVersion` (matching the minimum PHP version), the analysed paths and, if needed, the
   baseline. Analysed paths include all PHP code (`src/`, `tests/`, application code). Only generated code (caches,

@@ -72,6 +72,10 @@ declare(strict_types=1);
 
 - `final` classes by default. `readonly` classes or properties for value objects. Non-final only for intended
   extension points.
+- `readonly` is also the write-once guarantee for properties that are set once after construction (the result of an
+  action or command set in `execute()`, a value set in a setup method); PHP enforces the single assignment. This is
+  intended, also for private properties. Do not replace it with `private(set)`, which allows several writes. The
+  shared PHPStan configuration allows it (see [tooling.md](tooling.md), section 3).
 - Fully typed properties, parameters, constants and return types. No `mixed` in own code. PHPDoc only for what PHP
   cannot express (`list<FormField>`, `array<string, string>`, `non-empty-string`).
 - No untyped "options" arrays. Use small readonly value objects or named arguments instead.

@@ -33,3 +33,12 @@ parameters:
     reportAnyTypeWideningInVarTag: true
     rememberPossiblyImpureFunctionValues: false
     reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        # A native readonly property may be assigned once after construction (write-once, enforced by PHP), see
+        # standards/php.md, section 3. @readonly PHPDoc properties are not enforced by PHP and stay reported.
+        -
+            identifier: property.readOnlyAssignNotInConstructor
+            reportUnmatched: false
+        -
+            identifier: property.uninitializedReadonly
+            reportUnmatched: false

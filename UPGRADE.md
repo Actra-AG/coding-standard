@@ -3,6 +3,20 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.24.0 (2026-10-11)
+
+- ⚠️ `readonly` is also the write-once guarantee for properties set once after construction; do not replace it with
+  `private(set)` ([php.md](standards/php.md), section 3). The shared PHPStan configuration ignores
+  `property.readOnlyAssignNotInConstructor` and `property.uninitializedReadonly`
+  ([tooling.md](standards/tooling.md), section 3): remove the project's own ignores and baseline entries for these
+  identifiers (`reportUnmatchedIgnoredErrors` reports them otherwise).
+- View classes of yuf projects are named exactly like the file title, lowerCamelCase (`hosts`, `domainDelete`)
+  ([naming.md](standards/naming.md), section 2).
+- Database names: tables plural, link tables singular in alphabetical order (`customer_user`), columns singular,
+  primary key `id` or a stable business key, foreign keys `user_id` / `registrar_name`, timestamps `created_at`,
+  booleans `is_active` ([naming.md](standards/naming.md), section 4). Legacy names are renamed when their code is
+  changed ([naming.md](standards/naming.md), section 5).
+
 ## v1.23.0 (2026-10-10)
 
 - AI assistants may change attributes in HTML templates without visible effect (`data-*`, `aria-*`, `id`/`for`,
