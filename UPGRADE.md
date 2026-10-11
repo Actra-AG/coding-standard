@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.26.0 (2026-10-11)
+
+- Before every release (applications: before every deployment), projects update `actra/coding-standard` and every
+  Actra library to their latest released version, apply their `UPGRADE.md` entries and release only with a green
+  `composer check` ([versioning.md](standards/versioning.md), section 8). Remove the project's own copy of this rule
+  from its `AGENTS.md`.
+
 ## v1.25.0 (2026-10-11)
 
 - Sorted or paginated queries end their `ORDER BY` with a unique column, usually the primary key (yuf tables:

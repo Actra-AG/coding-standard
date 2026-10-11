@@ -105,5 +105,7 @@ When asked to review changes before commit, inspect the changed files and answer
    project has none, say whether adding one would be useful.
 3. Suggest a commit message following [git.md](standards/git.md) and the style of previous commit messages.
 4. For versioned packages, check the existing Git tags (`git tag --sort=-v:refname`) and suggest the next release tag
-   (see [versioning.md](standards/versioning.md)). For a library with a skeleton project, say whether the skeleton
-   needs an update (see [versioning.md](standards/versioning.md), section 1).
+   (see [versioning.md](standards/versioning.md)). Check that the Actra dependencies are up to date
+   (`composer outdated "actra/*"`, see [versioning.md](standards/versioning.md), section 8). For a library with a
+   skeleton project, say whether the skeleton needs an update (see [versioning.md](standards/versioning.md),
+   section 1).

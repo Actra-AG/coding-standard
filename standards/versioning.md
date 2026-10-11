@@ -112,6 +112,16 @@ Before: `FormField::create(name: 'email')`. After: `FormField::create(name: 'ema
 
 ## 8. Raising a dependency
 
+- **Before every release** (applications without releases: before every deployment), update
+  `actra/coding-standard` and every Actra library the project uses (`actra/yuf`, `actra/backend`, …) to their latest
+  released version (`composer update`, `composer outdated "actra/*"` lists what is behind). Read their `UPGRADE.md`
+  entries since the installed version and apply them, also the non-breaking ones (e.g. new rules for code touched in
+  the release). Release only with a green `composer check`. So rules, PHPStan configuration and fixes arrive early,
+  and breaking changes never pile up into one large migration.
+  - Libraries that lock the minor version (`~6.2.0`) raise the constraint to the latest minor version. The lower bound
+    still follows the rule below; "latest" means the installed version and the locked minor version.
+  - If an update needs a larger migration, release the pending changes first and do the migration in its own release,
+    instead of releasing without the update.
 - Read the `UPGRADE.md` of the dependency from the installed to the new version and adapt the code to every change
   marked ⚠️ before raising the constraint.
 - The lower bound of the constraint is the lowest version that has every API the code uses (`4.15`, not the newest
