@@ -4,8 +4,10 @@ HTML template files, CSS and JavaScript are changed manually by the frontend dev
 them: they write each needed change as a task for the frontend developer (what, where, why) and list it under
 "Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"). The rules below apply to every change of them.
 
-Exception: AI assistants may add, change or remove attributes in HTML templates without the frontend developer's
-approval when the change has no visible effect.
+Exceptions: AI assistants may change HTML templates without the frontend developer's approval in two cases.
+
+**Attributes without visible effect.** AI assistants may add, change or remove attributes when the change has no
+visible effect.
 
 - Allowed: `data-*` attributes read by JavaScript (`data-form="main form"`), `aria-*` attributes, `id`/`for` pairs,
   `name`, `autocomplete`, form attributes (`action`, `method`, `novalidate`) and attribute values that are URLs or
@@ -16,6 +18,26 @@ approval when the change has no visible effect.
   `[data-action]`, `[aria-expanded]`); otherwise it is a task for the frontend developer.
 - The change is still listed under "Frontend review" with the note "attribute only, no visible effect", so the
   frontend developer sees it.
+
+**Permission conditions.** AI assistants may add or change a template condition that only shows or hides an existing
+element by permission, on a boolean set by the view. A link or button must not be visible to users who may not open
+the linked page or run the action.
+
+```html
+<tst:if compare="canEditAttributes" operator="EQ" against="true">
+  <a href="{tst:text value='editAttributesHref'}" class="button">{tst:text value='editAttributesLabel'}</a>
+</tst:if>
+```
+
+- Allowed: wrapping an existing element (with its content) in a condition, changing the condition or its boolean.
+  The element itself stays as it is.
+- Not allowed: changed or new markup, classes or texts, conditions that render a wrapper element, conditions on
+  anything other than a permission.
+- Check before: no CSS selector depends on the element's position (`+`, `~`, `:first-child`, `:last-child`,
+  `:only-child`, `:empty`, `:has()`); otherwise it is a task for the frontend developer.
+- Hiding is not access control: the linked page or action still checks the permission itself (see
+  [security.md](security.md), section 7).
+- The change is listed under "Frontend review" with the note "permission condition, no design change".
 
 ## 1. HTML
 

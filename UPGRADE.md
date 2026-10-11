@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.27.0 (2026-10-11)
+
+- AI assistants may add or change template conditions that only show or hide an existing element by permission,
+  without changing markup, classes or texts; listed under "Frontend review" as "permission condition, no design
+  change" ([html-javascript.md](standards/html-javascript.md)).
+
 ## v1.26.0 (2026-10-11)
 
 - Before every release (applications: before every deployment), projects update `actra/coding-standard` and every
