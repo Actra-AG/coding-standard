@@ -13,6 +13,8 @@
 !/UPGRADE.md
 
 # Allow specific directories
+!/.github/
+!/.github/**
 !/docs/
 !/docs/**
 !/config/

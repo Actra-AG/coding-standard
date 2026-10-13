@@ -6,6 +6,11 @@
   changes for a big release. Small releases are easier to review, upgrade and roll back.
 - A version is released with a commit: the commit that completes the change also adds its `UPGRADE.md` section with
   version and date (see section 6) and is tagged with that version.
+- Packages hosted on GitHub (libraries, public modules) publish a GitHub release for every version tag, with the
+  `UPGRADE.md` section of that version as release notes, so consumers see them on GitHub and can be notified. The
+  workflow [release.yml](../templates/.github/workflows/release.yml) creates the release when the tag is pushed; do
+  not create releases by hand. Projects that keep a `CHANGELOG.md` instead (a documented deviation) are supported by
+  the same workflow. Applications without consumers need no GitHub releases.
 - A library with a skeleton or template project (the starting point of `composer create-project`) checks on every
   release whether the skeleton needs an update: the constraint for a new major version, code affected by a ⚠️ entry
   of `UPGRADE.md`, setup or settings changed in the docs. Report the result; if it needs an update, give the prompt

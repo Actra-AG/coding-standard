@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.28.0 (2026-10-13)
+
+- Packages hosted on GitHub publish a GitHub release for every version tag, with the `UPGRADE.md` (or `CHANGELOG.md`)
+  section of that version as release notes ([versioning.md](standards/versioning.md), section 1). Copy
+  [templates/.github/workflows/release.yml](templates/.github/workflows/release.yml) into the package; it creates the
+  release when the tag is pushed. Releases of earlier tags are not needed.
+
 ## v1.27.0 (2026-10-11)
 
 - AI assistants may add or change template conditions that only show or hide an existing element by permission,
