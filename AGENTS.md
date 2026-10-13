@@ -17,8 +17,10 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   class, pure logic separated from I/O, validate input at the boundary, escape output by default, bound SQL parameters
   only, no backwards compatibility layers (change APIs directly, consumers migrate with `UPGRADE.md`, see
   [versioning.md](standards/versioning.md), section 4).
-- Best possible performance is the first priority, after security and correctness: respond and return early, no
-  queries in loops, cache wherever it saves noticeable time (see [performance.md](standards/performance.md)).
+- Priorities, in this order: 1. security, 2. correctness, 3. performance, 4. everything else (readability,
+  brevity, convenience). A higher priority is never traded for a lower one. Respond and return early wherever it keeps
+  the response secure and correct, no queries in loops, cache wherever it saves noticeable time (see
+  [performance.md](standards/performance.md)).
 - Security and performance improvements are on by default; features that need project data get a required argument
   (`null` as explicit opt-out). Changing a default is breaking (see [versioning.md](standards/versioning.md),
   section 9).

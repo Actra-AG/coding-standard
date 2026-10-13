@@ -1,7 +1,15 @@
 # Performance
 
-Best possible performance is the first priority of every design and implementation decision. Only security and
-correctness come before it: never trade them for speed.
+Every design and implementation decision follows these priorities, in this order:
+
+1. Security
+2. Correctness
+3. Performance
+4. Everything else (readability, brevity, convenience)
+
+A higher priority is never traded for a lower one: never trade security or correctness for speed, but choose the
+fastest solution that is secure and correct, even if it is longer or less convenient. Responding and returning early
+(section 1) is required wherever the response stays secure and correct.
 
 ## 1. Requests
 

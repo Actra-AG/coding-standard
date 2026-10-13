@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.29.0 (2026-10-13)
+
+- Decisions follow a ranked list of priorities: 1. security, 2. correctness, 3. performance, 4. everything else
+  (readability, brevity, convenience); a higher priority is never traded for a lower one. Early responses are required
+  wherever they stay secure and correct ([performance.md](standards/performance.md)).
+
 ## v1.28.0 (2026-10-13)
 
 - Packages hosted on GitHub publish a GitHub release for every version tag, with the `UPGRADE.md` (or `CHANGELOG.md`)
