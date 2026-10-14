@@ -4,7 +4,8 @@ HTML template files, CSS and JavaScript are changed manually by the frontend dev
 them: they write each needed change as a task for the frontend developer (what, where, why) and list it under
 "Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"). The rules below apply to every change of them.
 
-Exceptions: AI assistants may change HTML templates without the frontend developer's approval in two cases.
+Exceptions: AI assistants may change HTML templates without the frontend developer's approval in two cases (Craft
+projects: a third, see [craft.md](craft.md), section 2).
 
 **Attributes without visible effect.** AI assistants may add, change or remove attributes when the change has no
 visible effect.

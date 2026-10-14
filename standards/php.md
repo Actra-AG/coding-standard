@@ -11,7 +11,8 @@ Target version: the current PHP release (at the time of writing PHP 8.5). Each p
   access `$_GET`, `$_POST`, `$_SESSION`, `$_SERVER`, `$_COOKIE`, the file system, the database, the network or the
   clock directly. They get their input as arguments and are unit tested.
 - Dependencies are passed in through the constructor. No new static state, singletons or global functions. Existing
-  static accessors are replaced by explicit dependencies when their code is changed.
+  static accessors are replaced by explicit dependencies when their code is changed. Craft projects: see
+  [craft.md](craft.md), section 1.
 - If time matters, inject a `Clock` interface instead of calling `time()` or `new DateTimeImmutable()` in logic.
 - Prefer composition over inheritance. Abstract base classes only for a real "is a" relation; interfaces for
   extension points that projects implement (e.g. renderers, rules, template tags).

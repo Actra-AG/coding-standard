@@ -88,7 +88,8 @@ Every task and every commit must end with a green `composer check`.
   `$GLOBALS` and `$_REQUEST` are disallowed in every project. Not for WordPress plugins, legacy code without request
   objects or plain scripts. The few files that must read superglobals (entry points such as `public/index.php`, the
   framework's own request factory or session handler) are listed in `actraSuperglobalsAllowIn` (paths relative to
-  the project root, `fnmatch()` patterns), not in the baseline:
+  the project root, `fnmatch()` patterns), not in the baseline (Craft projects: see [craft.md](craft.md),
+  section 4):
   ```neon
   includes:
       - vendor/actra/coding-standard/config/phpstan.neon
@@ -142,7 +143,8 @@ Every task and every commit must end with a green `composer check`.
 - Composer loads all classes, also the project's own: PSR-4 in `composer.json`, `autoload` for application code and
   `autoload-dev` for tests. No second autoloader and no autoloader registration in the application or the tests.
 - Entry points (`public/index.php`, CLI scripts) include `vendor/autoload.php` first. The test bootstrap only includes
-  `vendor/autoload.php`. PHPStan needs no `scanDirectories` for own or Actra classes.
+  `vendor/autoload.php`. PHPStan needs no `scanDirectories` for own or Actra classes; generated classes are allowed
+  (Craft: see [craft.md](craft.md), section 4).
 - `composer dump-autoload --optimize --strict-psr` runs without warnings: file and class names match the namespace
   mapping.
 - Composer is needed to build an application (`vendor/`), not on the server. Production uses an optimized

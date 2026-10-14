@@ -12,6 +12,7 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
     [html-javascript.md](standards/html-javascript.md), [i18n.md](standards/i18n.md)
   - [testing.md](standards/testing.md), [tooling.md](standards/tooling.md)
   - [versioning.md](standards/versioning.md), [git.md](standards/git.md)
+  - Craft CMS projects: [craft.md](standards/craft.md)
 - Key rules: PER Coding Style, `declare(strict_types=1);` and the copyright header in every PHP file, `final` by
   default, fully typed, no `mixed` in own code, enums for every fixed set of values, named arguments, one purpose per
   class, pure logic separated from I/O, validate input at the boundary, escape output by default, bound SQL parameters
@@ -55,7 +56,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   the handover notes or the final report. Only exceptions (see [html-javascript.md](standards/html-javascript.md)):
   attributes in templates without visible effect (`data-*`, `aria-*`, `id`/`for`, `name`, form attributes, URLs and
   texts filled from PHP) that no CSS selector matches, and template conditions that only show or hide an existing
-  element by permission, without changing markup, classes or texts.
+  element by permission, without changing markup, classes or texts. In Craft projects, AI assistants may also move
+  logic out of Twig templates into PHP (see [craft.md](standards/craft.md), section 2).
 - Fix problems at their cause: when it lies in a library maintained by Actra (e.g. `actra/yuf`, `actra/backend`:
   bug, missing typed API or feature), add no local workaround (wrapper, cast, copy of library code) in the consuming
   project. Describe the cause and write a complete prompt for the library's own session (goal, the cleanest API

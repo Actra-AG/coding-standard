@@ -65,6 +65,7 @@ classes in `view/<group>/php/` are named exactly like the file title, not Pascal
   key name (`registrar_name`), or only the key name if it already contains the table name (`customer_number`).
 - Timestamps: `created_at`, `updated_at`, `deleted_at`.
 - Booleans read as a statement: `is_active`, `has_api`.
+- Craft projects use camelCase columns (see [craft.md](craft.md), section 3).
 
 ## 5. Legacy names
 

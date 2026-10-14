@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.30.0 (2026-10-14)
+
+- New [craft.md](standards/craft.md) for Craft CMS projects: glue code uses Craft's service locator, logic classes get
+  their dependencies through the constructor; AI assistants may move logic out of Twig templates into PHP when the
+  rendered HTML stays identical; columns are camelCase as in Craft (`entryId`, `dateCreated`, `uid`). Craft projects
+  remove these three deviations from their own `AGENTS.md`.
+
 ## v1.29.0 (2026-10-13)
 
 - Decisions follow a ranked list of priorities: 1. security, 2. correctness, 3. performance, 4. everything else
