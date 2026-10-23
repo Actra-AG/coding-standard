@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.32.0 (2026-10-23)
+
+- The rule against real data in examples also covers user-facing documentation (help pages, articles, `README.md`,
+  `docs/`) and names the reserved values to use instead: the domains and TLDs of RFC 2606, the IPv4 ranges of
+  RFC 5737 and the IPv6 prefix of RFC 3849. Invented placeholder domains (`ihre-domain.ch`, `domain.tld`) are not
+  allowed; with several parties in one example, `example.com` is the reader's own domain and `example.net` the third
+  party ([security.md](standards/security.md), section 10).
+
 ## v1.31.0 (2026-10-23)
 
 - AI assistants may change HTML templates as long as the design does not change: texts, attributes that no CSS

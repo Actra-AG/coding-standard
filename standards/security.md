@@ -107,8 +107,14 @@ Order: **read → sanitize (normalize) → validate → use typed values.**
 ## 10. Secrets and sensitive data
 
 - No secrets, credentials, API keys, private hostnames, IP addresses, personal data or real customer data in the
-  repository, in tests, fixtures, examples, issues or commit messages. Use example values (`example.com`, RFC 5737
-  IP ranges such as `192.0.2.0/24`).
+  repository, in tests, fixtures, examples, issues, commit messages or user-facing documentation (help pages,
+  articles, `README.md`, `docs/`). Use the reserved values: the domains `example.com`, `example.net`, `example.org`
+  and the TLDs `.example`, `.test`, `.invalid`, `.localhost` (RFC 2606), the IPv4 ranges `192.0.2.0/24`,
+  `198.51.100.0/24`, `203.0.113.0/24` (RFC 5737) and the IPv6 prefix `2001:db8::/32` (RFC 3849).
+- Never invent a placeholder domain (`ihre-domain.ch`, `domain.tld`, `meinefirma.de`): it may belong to someone, or
+  it is no domain at all. Where an example has several parties, keep them apart consistently: `example.com` for the
+  reader's own domain, `example.net` for a third party (a service provider, a foreign sender). Describe look-alike
+  domains (typosquatting, added words) instead of naming one.
 - Secrets live in untracked environment files (e.g. `.env.php`, listed in `.gitignore`); the repository contains only
   an example file with placeholders (`.env.example.php`).
 - Logs never contain passwords, tokens, session IDs or full payment data. Mask personal data where possible.
