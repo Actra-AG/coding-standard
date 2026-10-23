@@ -1,24 +1,37 @@
 # HTML and JavaScript
 
-HTML template files, CSS and JavaScript are changed manually by the frontend developer. AI assistants never edit
-them: they write each needed change as a task for the frontend developer (what, where, why) and list it under
-"Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"). The rules below apply to every change of them.
+CSS is changed manually by the frontend developer, JavaScript too unless the user decides otherwise (AI assistants
+ask). AI assistants may change HTML templates as long as the design does not change, in the cases below (Craft
+projects: also [craft.md](craft.md), section 2). Every other change is a task for the frontend developer (what, where,
+why) under "Frontend review" (see [AGENTS.md](../AGENTS.md), "Working on a task"): new or changed `class` values
+beyond existing patterns, `style` attributes, changes of layout or structure that affect the design, any change of CSS
+files. Every template change of an AI assistant is listed under "Frontend review" with a short note, so the frontend
+developer reviews it before release. The rules below apply to every change of them.
 
-Exceptions: AI assistants may change HTML templates without the frontend developer's approval in two cases (Craft
-projects: a third, see [craft.md](craft.md), section 2).
+**Texts.** AI assistants may change texts: page copy, headings, link and button texts. Note: "text only".
 
-**Attributes without visible effect.** AI assistants may add, change or remove attributes when the change has no
-visible effect.
+**Attributes.** AI assistants may add, change or remove attributes.
 
 - Allowed: `data-*` attributes read by JavaScript (`data-form="main form"`), `aria-*` attributes, `id`/`for` pairs,
-  `name`, `autocomplete`, form attributes (`action`, `method`, `novalidate`) and attribute values that are URLs or
-  texts filled from PHP.
-- Not allowed: `class`, `style`, `hidden`, elements of any kind, any change of CSS or JavaScript files. Hidden inputs
-  are elements too: they change sibling selectors such as `.form>:not([type=hidden])+*`.
+  `name`, `autocomplete`, `alt`, `title`, `href`, form attributes (`action`, `method`, `novalidate`) and attribute
+  values that are URLs or texts filled from PHP.
+- Not allowed: `class` (except as content markup below), `style`, `hidden`. Hidden inputs are a task for the frontend
+  developer: they change sibling selectors such as `.form>:not([type=hidden])+*`.
 - Check before: no CSS selector of the project or its libraries matches the attribute (attribute selectors such as
   `[data-action]`, `[aria-expanded]`); otherwise it is a task for the frontend developer.
-- The change is still listed under "Frontend review" with the note "attribute only, no visible effect", so the
-  frontend developer sees it.
+- Note: "attribute only, no visible effect".
+
+**Content markup.** AI assistants may add, change or remove content markup that reuses existing elements and classes
+the way the project already uses them: paragraphs, lists, tables, a new content page built from an existing page's
+structure.
+
+- Allowed: elements and classes the project uses for the same content in the same context (the same container or
+  component), a new page that copies the structure and classes of an existing page of the same kind.
+- Not allowed: new class combinations, wrapper elements the existing pattern does not have, changed order or nesting
+  of sections or components, elements moved into a context where the project does not use them.
+- Check before: selectors that depend on position (`+`, `~`, `:first-child`, `:last-child`, `:only-child`, `:empty`,
+  `:has()`) still match as on the existing page; otherwise it is a task for the frontend developer.
+- Note: "content markup, pattern from <template>".
 
 **Permission conditions.** AI assistants may add or change a template condition that only shows or hides an existing
 element by permission, on a boolean set by the view. A link or button must not be visible to users who may not open

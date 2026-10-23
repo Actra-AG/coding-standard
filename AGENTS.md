@@ -51,13 +51,15 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   naming them), every change of HTML templates or CSS needs their approval before it is released. The handover notes
   of the task (without a plan: the final report) list the changed templates and CSS files under "Frontend review",
   each with a short note what changed; the QA of a plan collects them into one list.
-- AI assistants never edit HTML template files, CSS or JavaScript; the frontend developer changes them manually. Write
-  each needed change as a task for the frontend developer (what, where, why) and list it under "Frontend review" in
-  the handover notes or the final report. Only exceptions (see [html-javascript.md](standards/html-javascript.md)):
-  attributes in templates without visible effect (`data-*`, `aria-*`, `id`/`for`, `name`, form attributes, URLs and
-  texts filled from PHP) that no CSS selector matches, and template conditions that only show or hide an existing
-  element by permission, without changing markup, classes or texts. In Craft projects, AI assistants may also move
-  logic out of Twig templates into PHP (see [craft.md](standards/craft.md), section 2).
+- AI assistants may change HTML templates as long as the design does not change (see
+  [html-javascript.md](standards/html-javascript.md)): texts, attributes that no CSS selector matches, content markup
+  that reuses existing elements and classes the way the project already uses them, and template conditions that only
+  show or hide an existing element by permission. In Craft projects, they may also move logic out of Twig templates
+  into PHP (see [craft.md](standards/craft.md), section 2). They never add new or changed `class` values beyond
+  existing patterns or `style` attributes, never change layout or structure in a way that affects the design, never
+  edit CSS, and edit JavaScript only when the user decides so (ask). Write each such change as a task for the frontend
+  developer (what, where, why) and list it under "Frontend review" in the handover notes or the final report. Every
+  template change of an AI assistant is listed there too, with a short note, so it is reviewed before release.
 - Fix problems at their cause: when it lies in a library maintained by Actra (e.g. `actra/yuf`, `actra/backend`:
   bug, missing typed API or feature), add no local workaround (wrapper, cast, copy of library code) in the consuming
   project. Describe the cause and write a complete prompt for the library's own session (goal, the cleanest API

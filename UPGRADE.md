@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.31.0 (2026-10-23)
+
+- AI assistants may change HTML templates as long as the design does not change: texts, attributes that no CSS
+  selector matches, and content markup that reuses existing elements and classes the way the project already uses them
+  ([html-javascript.md](standards/html-javascript.md)). New `class` values beyond existing patterns, `style`
+  attributes, design-relevant layout changes and CSS stay tasks for the frontend developer; JavaScript only when the
+  user decides so. Every template change is still listed under "Frontend review".
+
 ## v1.30.0 (2026-10-14)
 
 - New [craft.md](standards/craft.md) for Craft CMS projects: glue code uses Craft's service locator, logic classes get

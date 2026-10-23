@@ -23,7 +23,7 @@ the goal of the general rule: explicit dependencies, testable logic.
 ## 2. Templates
 
 Refines [AGENTS.md](../AGENTS.md), "Working on a task", and [html-javascript.md](html-javascript.md), which allow AI
-assistants only attribute changes without visible effect and permission conditions in templates.
+assistants template changes only as long as the design does not change.
 
 - AI assistants may also move logic (calculations, lookups, decisions, `{% set %}` blocks that compute) out of Twig
   templates into PHP and replace it with one call to a named PHP entry point (Twig function or variable). The logic
