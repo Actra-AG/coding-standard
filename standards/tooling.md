@@ -149,3 +149,48 @@ Every task and every commit must end with a green `composer check`.
   mapping.
 - Composer is needed to build an application (`vendor/`), not on the server. Production uses an optimized
   autoloader (see [performance.md](performance.md), section 3).
+
+## 8. Deployment
+
+Applications are deployed with `vendor/bin/deploy` of this package, run on the developer's machine with their own SSH
+keys. No manual `git pull` on the server, no CI/CD pipeline.
+
+```bash
+vendor/bin/deploy          # the defaultRef of deploy.json
+vendor/bin/deploy v1.7.0   # a tag, branch or commit on origin (e.g. the previous commit for a rollback)
+vendor/bin/deploy --yes    # without confirmation, for scripts
+```
+
+- **Steps:** locally, `deploy` fetches origin, resolves the ref (only commits on origin, never unpushed ones), reads the
+  live commit on the server, shows both with the commits in between and asks for confirmation. Then, in one SSH call
+  on the server, it stops if the working tree has local changes, runs `git fetch --tags`, checks out the commit (the
+  `defaultRef` branch with a fast-forward, any other ref detached), runs
+  `composer install --no-dev --optimize-autoloader --no-interaction`, deletes the `clearDirectories`, runs the `after`
+  commands and appends a line to `deploy.log`. At the end it prints the live and the previous commit; a rollback is
+  `vendor/bin/deploy <previous commit>`.
+- **Configuration:** `deploy.json` in the project root, committed (see [template](../templates/deploy.json)). Unknown
+  keys and invalid values stop the deployment.
+
+  | Key                | Value                                                                                       |
+  |:-------------------|:--------------------------------------------------------------------------------------------|
+  | `host`             | SSH alias of the server (see below)                                                         |
+  | `path`             | Absolute path of the project root on the server (the Git checkout)                          |
+  | `defaultRef`       | `latest-tag` (highest `vMAJOR.MINOR.PATCH` tag, no pre-releases) or a branch, e.g. `main`   |
+  | `clearDirectories` | Globs relative to the project root, deleted after `composer install` (`["app/cache/v*/"]`)  |
+  | `after`            | Optional shell commands, run in the project root at the end                                 |
+
+  `clearDirectories` never leave the project root: no absolute paths, no `.`, `..` or `.git` segments, no empty
+  globs, the first directory named without wildcards; matches outside the root (symbolic links) stop the deployment.
+- **SSH:** `host` is an alias of `~/.ssh/config` with `HostName`, `User`, `Port` and `IdentityFile`. Every developer
+  who deploys defines the same alias; user, port and key never go into the project.
+- **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash, Git, Composer and
+  PHP on the `PATH` of a login shell. The web server's document root is `public/`, so `.git/`, `.env.php`,
+  `deploy.log` and everything else outside `public/` is never reachable from the web. Nobody edits files of the
+  checkout on the server; server-specific files are ignored by Git.
+- **Log:** `deploy.log` in the project root gets one tab-separated line per deployment: UTC time, `ok` or `failed`,
+  ref, live commit, previous commit, Git user of the developer. The project ignores it in `.gitignore` (`/deploy.log`;
+  a whitelist `.gitignore` already does); `deploy` refuses to run otherwise.
+- **Local requirements:** bash 3.2 or newer (macOS default), Git, SSH and [jq](https://jqlang.org) (included in macOS
+  15 and newer).
+- Before deploying, update the Actra dependencies and make `composer check` green (see
+  [versioning.md](versioning.md), section 8). AI assistants never deploy on their own.

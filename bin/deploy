@@ -1,0 +1,380 @@
+#!/usr/bin/env bash
+# Actra coding standard: https://github.com/Actra-AG/coding-standard (standards/tooling.md, section 8)
+#
+# Deploys the project to its server over SSH: the server checkout switches to a commit that exists on origin, then
+# runs composer install, clears the configured directories and runs the configured commands. Configuration:
+# deploy.json in the project root. Runs on the developer's machine with bash 3.2 or newer (macOS default), git, ssh
+# and jq; the server needs bash, git and composer.
+
+set -euo pipefail
+
+readonly config_file='deploy.json'
+readonly log_file='deploy.log'
+readonly config_keys='["after","clearDirectories","defaultRef","host","path"]'
+
+usage() {
+  cat <<'USAGE'
+Usage: vendor/bin/deploy [--yes] [<tag|branch|commit>]
+
+Deploys the project to the server configured in deploy.json. Without a ref, the defaultRef of deploy.json is
+deployed. Only commits that exist on origin can be deployed. Roll back by deploying the previous commit.
+
+Options:
+  -y, --yes   Deploy without asking for confirmation
+  -h, --help  Show this help
+USAGE
+}
+
+fail() {
+  printf 'deploy: %s\n' "$*" >&2
+  exit 1
+}
+
+# Quotes a value as one word for the remote shell
+quote() {
+  printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
+}
+
+# Validates a glob of clearDirectories: relative to the project root, never leaving it
+validate_clear_pattern() {
+  local pattern=$1 segment
+  local -a segments
+  [[ $pattern =~ ^[A-Za-z0-9._*?/-]+$ ]] \
+    || fail "clearDirectories: \"$pattern\" may only contain letters, digits and . _ - / * ?"
+  [[ $pattern != /* ]] || fail "clearDirectories: \"$pattern\" must be relative to the project root"
+  IFS=/ read -r -a segments <<< "${pattern%/}"
+  [[ ${segments[0]} != *[*?]* ]] \
+    || fail "clearDirectories: the first directory of \"$pattern\" must be named without wildcards"
+  for segment in "${segments[@]}"; do
+    case $segment in
+      '' | . | .. | .git) fail "clearDirectories: \"$pattern\" must not contain empty, ., .. or .git segments" ;;
+    esac
+  done
+}
+
+# Reads and validates deploy.json; sets host, path, default_ref, clear_patterns and after_commands
+read_config() {
+  local errors line
+  [[ -f $config_file ]] || fail "$config_file not found in the project root (template: templates/deploy.json)"
+  errors=$(jq -r --argjson known "$config_keys" '
+    . as $config
+    | if type != "object" then "the file must contain a JSON object" else
+        (keys - $known | .[] | "unknown key \"\(.)\""),
+        ("host", "path", "defaultRef" | select(($config[.] | type) != "string") | "\"\(.)\" must be a string"),
+        ("clearDirectories", "after"
+          | . as $key
+          | select($config | has($key))
+          | select(($config[$key] | type) != "array" or ($config[$key] | map(type) | unique - ["string"] != []))
+          | "\"\($key)\" must be an array of strings"),
+        (select("clearDirectories" | in($config) | not) | "\"clearDirectories\" is missing (use [] for none)"),
+        (select([.. | strings | select(test("[[:cntrl:]]"))] != []) | "values must not contain control characters")
+      end
+  ' "$config_file") || fail "$config_file is not valid JSON"
+  [[ $errors == '' ]] || fail "invalid $config_file: ${errors//$'\n'/; }"
+
+  host=$(jq -r '.host' "$config_file")
+  path=$(jq -r '.path' "$config_file")
+  default_ref=$(jq -r '.defaultRef' "$config_file")
+  clear_patterns=()
+  while IFS= read -r line; do clear_patterns+=("$line"); done < <(jq -r '.clearDirectories[]' "$config_file")
+  after_commands=()
+  while IFS= read -r line; do after_commands+=("$line"); done < <(jq -r '.after // [] | .[]' "$config_file")
+
+  # An SSH alias of ~/.ssh/config: user, port and key belong there, not into the project
+  [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || fail "host must be an SSH alias (letters, digits, . _ -)"
+  [[ $path =~ ^/[A-Za-z0-9._@+/-]+$ ]] || fail "path must be an absolute path (letters, digits, . _ @ + - /)"
+  case "$path/" in
+    *//* | */./* | */../*) fail "path must not contain empty, . or .. segments" ;;
+  esac
+  if [[ $default_ref != latest-tag ]] \
+    && { [[ $default_ref == -* ]] || ! git check-ref-format "refs/heads/$default_ref"; }; then
+    fail "defaultRef must be latest-tag or a branch name"
+  fi
+  local pattern command
+  for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do validate_clear_pattern "$pattern"; done
+  for command in ${after_commands[@]+"${after_commands[@]}"}; do
+    [[ $command =~ [^[:space:]] ]] || fail "after must not contain empty commands"
+  done
+}
+
+# Prints the commit of a ref on origin (tags peeled), empty if it does not exist
+origin_commit() {
+  awk -F '\t' -v ref="$1" '
+    $2 == ref "^{}" { peeled = $1 }
+    $2 == ref { direct = $1 }
+    END { print (peeled != "" ? peeled : direct) }
+  ' <<< "$origin_refs"
+}
+
+# Prints the highest version tag on origin (vMAJOR.MINOR.PATCH, no pre-releases)
+latest_tag() {
+  awk -F '\t' '$2 ~ /^refs\/tags\/v?[0-9]+(\.[0-9]+)*$/ { print substr($2, 11) }' <<< "$origin_refs" \
+    | awk '{
+        version = $0
+        sub(/^v/, "", version)
+        count = split(version, parts, ".")
+        key = ""
+        for (i = 1; i <= count; i++) key = key sprintf("%010d.", parts[i])
+        print key "\t" $0
+      }' \
+    | sort -r | awk -F '\t' 'NR == 1 { print $2 }'
+}
+
+# Succeeds if the commit is reachable from a branch or tag on origin
+on_origin() {
+  local commit=$1 ref_commit
+  while IFS= read -r ref_commit; do
+    git merge-base --is-ancestor "$commit" "$ref_commit" 2> /dev/null && return 0
+  done < <(awk -F '\t' '{ print $1 }' <<< "$origin_refs" | sort -u)
+  return 1
+}
+
+# Resolves the ref to deploy; sets ref_label, target_commit and target_branch (empty: detached checkout)
+resolve_ref() {
+  local ref=$1 tag_commit branch_commit
+  target_branch=''
+  if [[ $ref == '' ]]; then
+    if [[ $default_ref == latest-tag ]]; then
+      ref_label=$(latest_tag)
+      [[ $ref_label != '' ]] || fail "origin has no version tag (vMAJOR.MINOR.PATCH)"
+      target_commit=$(origin_commit "refs/tags/$ref_label")
+    else
+      ref_label=$default_ref
+      target_commit=$(origin_commit "refs/heads/$default_ref")
+      [[ $target_commit != '' ]] || fail "branch $default_ref does not exist on origin"
+      target_branch=$default_ref
+    fi
+    return
+  fi
+  [[ $ref =~ ^[A-Za-z0-9._/-]+$ && $ref != -* ]] || fail "invalid ref: $ref"
+  ref_label=$ref
+  tag_commit=$(origin_commit "refs/tags/$ref")
+  branch_commit=$(origin_commit "refs/heads/$ref")
+  if [[ $tag_commit != '' && $branch_commit != '' ]]; then
+    fail "$ref is a tag and a branch on origin; deploy the commit instead"
+  fi
+  target_commit=$tag_commit$branch_commit
+  if [[ $target_commit == '' ]]; then
+    [[ $ref =~ ^[0-9a-f]{7,40}$ ]] || fail "$ref is no tag or branch on origin and no commit hash"
+    target_commit=$(git rev-parse --verify --quiet "$ref^{commit}") || fail "unknown or ambiguous commit: $ref"
+    on_origin "$target_commit" || fail "commit $ref is not on origin; push it first"
+  fi
+}
+
+# Prints the short hash of a commit, with its tags
+describe() {
+  local tags
+  if git cat-file -e "$1^{commit}" 2> /dev/null; then
+    tags=$(git tag --points-at "$1" | paste -s -d ' ' -)
+    printf '%s%s' "$(git rev-parse --short "$1")" "${tags:+ ($tags)}"
+  else
+    printf '%s (unknown locally)' "$1"
+  fi
+}
+
+# Prints the commits between the live and the new commit
+show_changes() {
+  local live=$1 target=$2 count range
+  if [[ $live == "$target" ]]; then
+    echo 'The commit is already live: deploying it again.'
+    return
+  fi
+  git cat-file -e "$live^{commit}" 2> /dev/null || return 0
+  for range in "$live..$target" "$target..$live"; do
+    count=$(git rev-list --count "$range")
+    [[ $count != 0 ]] || continue
+    if [[ $range == "$live..$target" ]]; then echo "New commits ($count):"; else echo "Removed commits ($count):"; fi
+    git log --oneline --no-decorate --max-count=30 "$range" | sed 's/^/  /'
+    [[ $count -le 30 ]] || echo '  …'
+  done
+}
+
+# Runs one of the remote_* functions on the server, every argument quoted
+run_remote() {
+  local function_name=$1 script command argument
+  shift
+  script="$(declare -f remote_fail remote_inspect remote_write_log remote_deploy)
+set -euo pipefail
+$function_name \"\$@\""
+  # Login shell: the same PATH (composer, PHP version) as an interactive SSH session
+  command="bash -lc $(quote "$script") deploy"
+  for argument in "$@"; do command+=" $(quote "$argument")"; done
+  ssh -n -T -- "$host" "$command"
+}
+
+# --- Functions that run on the server ---
+
+remote_fail() {
+  printf 'deploy (server): %s\n' "$*" >&2
+  exit 1
+}
+
+# Prints the live commit and branch; fails if the working tree has local changes
+remote_inspect() {
+  cd -- "$1" || remote_fail "project root $1 not found"
+  [[ $(git rev-parse --show-toplevel) == "$(pwd -P)" ]] || remote_fail "$1 is not the root of a Git checkout"
+  status=$(git status --porcelain)
+  if [[ $status != '' ]]; then
+    printf '%s\n' "$status" >&2
+    remote_fail 'the working tree on the server has local changes; clean it up first'
+  fi
+  printf 'deploy-commit=%s\n' "$(git rev-parse HEAD)"
+  printf 'deploy-branch=%s\n' "$(git symbolic-ref --short -q HEAD || true)"
+}
+
+remote_write_log() {
+  [[ $deploy_switched == 1 ]] || return 0
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$deploy_status" "$deploy_ref" \
+    "$(git -C "$deploy_root" rev-parse HEAD)" "$deploy_previous" "$deploy_user" >> "$deploy_root/deploy.log"
+}
+
+# Arguments: path, expected live commit, target commit, branch (empty: detached), ref, user, number of clear
+# patterns, clear patterns, after commands
+remote_deploy() {
+  cd -- "$1" || remote_fail "project root $1 not found"
+  deploy_root=$(pwd -P)
+  deploy_previous=$2
+  deploy_target=$3
+  deploy_branch=$4
+  deploy_ref=$5
+  deploy_user=$6
+  deploy_clear=()
+  deploy_count=$7
+  shift 7
+  while [[ $deploy_count -gt 0 ]]; do
+    deploy_clear+=("$1")
+    shift
+    deploy_count=$((deploy_count - 1))
+  done
+  deploy_switched=0
+  deploy_status='failed'
+
+  [[ $(git rev-parse --show-toplevel) == "$deploy_root" ]] \
+    || remote_fail "$deploy_root is not the root of a Git checkout"
+  git check-ignore -q deploy.log || remote_fail 'deploy.log is not ignored by the project (.gitignore)'
+  [[ $(git rev-parse HEAD) == "$deploy_previous" ]] \
+    || remote_fail 'the live commit changed since the check; run deploy again'
+  [[ $(git status --porcelain) == '' ]] || remote_fail 'the working tree on the server has local changes'
+
+  echo '> git fetch --tags origin'
+  git fetch --quiet --tags origin
+  git cat-file -e "$deploy_target^{commit}" 2> /dev/null \
+    || remote_fail "commit $deploy_target not found after fetching origin"
+
+  trap remote_write_log EXIT
+  deploy_switched=1
+  if [[ $deploy_branch != '' ]]; then
+    echo "> git checkout $deploy_branch && git merge --ff-only $deploy_target"
+    git checkout --quiet "$deploy_branch" --
+    git merge --quiet --ff-only "$deploy_target"
+  else
+    echo "> git checkout --detach $deploy_target"
+    git -c advice.detachedHead=false checkout --quiet --detach "$deploy_target"
+  fi
+  [[ $(git rev-parse HEAD) == "$deploy_target" ]] || remote_fail "checkout did not end at $deploy_target"
+
+  echo '> composer install --no-dev --optimize-autoloader --no-interaction'
+  composer install --no-dev --optimize-autoloader --no-interaction < /dev/null
+
+  shopt -s nullglob
+  for pattern in ${deploy_clear[@]+"${deploy_clear[@]}"}; do
+    # Checked again on the server: relative, no . or .. segments
+    case "/${pattern%/}/" in
+      //* | */./* | */../* | *//*) remote_fail "refusing to clear $pattern" ;;
+    esac
+    # shellcheck disable=SC2206 # the pattern is a glob, validated to contain no spaces
+    matches=($pattern)
+    [[ ${#matches[@]} != 0 ]] || echo "> clear $pattern: nothing to clear"
+    for match in ${matches[@]+"${matches[@]}"}; do
+      match=${match%/}
+      parent=$(cd -P -- "$(dirname -- "$match")" && pwd -P)
+      name=$(basename -- "$match")
+      case "$parent/" in
+        "$deploy_root"/*) ;;
+        *) remote_fail "refusing to clear $match: outside the project root" ;;
+      esac
+      echo "> rm -rf $match"
+      rm -rf -- "${parent:?}/${name:?}"
+    done
+  done
+  shopt -u nullglob
+
+  for command in "$@"; do
+    echo "> $command"
+    (cd -- "$deploy_root" && bash -c "$command" < /dev/null)
+  done
+
+  deploy_status='ok'
+}
+
+# --- Main ---
+
+assume_yes=0
+ref=''
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -y | --yes) assume_yes=1 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      [[ $# -le 1 ]] || fail 'only one ref can be deployed'
+      ref=${1:-}
+      break
+      ;;
+    -*) fail "unknown option: $1 (see --help)" ;;
+    *)
+      [[ $ref == '' ]] || fail 'only one ref can be deployed'
+      ref=$1
+      ;;
+  esac
+  shift
+done
+
+command -v jq > /dev/null || fail 'jq is required (macOS 15 and newer include it, otherwise: brew install jq)'
+project_root=$(git rev-parse --show-toplevel 2> /dev/null) || fail 'run deploy inside the project'
+cd "$project_root"
+git remote get-url origin > /dev/null 2>&1 || fail 'the project has no remote named origin'
+read_config
+
+echo 'Fetching origin …'
+git fetch --quiet --tags origin
+origin_refs=$(git ls-remote --heads --tags origin)
+resolve_ref "$ref"
+
+echo "Reading the live commit from $host …"
+live_output=$(run_remote remote_inspect "$path") || fail "checking the server $host failed"
+live_commit=$(sed -n 's/^deploy-commit=//p' <<< "$live_output" | tail -n 1)
+live_branch=$(sed -n 's/^deploy-branch=//p' <<< "$live_output" | tail -n 1)
+[[ $live_commit =~ ^[0-9a-f]{40}$ ]] || fail "could not read the live commit on $host"
+
+echo
+echo "Server:  $host:$path"
+echo "Live:    $(describe "$live_commit")${live_branch:+ on branch $live_branch}"
+echo "Deploy:  $(describe "$target_commit") ← $ref_label${target_branch:+ (branch, fast-forward)}"
+show_changes "$live_commit" "$target_commit"
+echo
+
+if [[ $assume_yes != 1 ]]; then
+  [[ -t 0 ]] || fail 'no terminal to confirm; use --yes'
+  read -r -p 'Deploy? [y/N] ' answer || answer=''
+  case $answer in
+    y | Y | yes | Yes) ;;
+    *) fail 'cancelled' ;;
+  esac
+fi
+
+user=$(git config user.name || true)
+email=$(git config user.email || true)
+user=$(printf '%s%s' "${user:-${USER:-unknown}}" "${email:+ <$email>}" | tr -d '[:cntrl:]')
+
+run_remote remote_deploy "$path" "$live_commit" "$target_commit" "$target_branch" "$ref_label" "$user" \
+  "${#clear_patterns[@]}" ${clear_patterns[@]+"${clear_patterns[@]}"} ${after_commands[@]+"${after_commands[@]}"} \
+  || fail "deployment failed; the server log is $path/$log_file, roll back with: vendor/bin/deploy $live_commit"
+
+echo
+echo "Live:     $(describe "$target_commit") ← $ref_label"
+echo "Previous: $(describe "$live_commit")"
+echo "Roll back with: vendor/bin/deploy $live_commit"

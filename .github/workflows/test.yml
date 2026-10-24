@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    strategy:
+      matrix:
+        # macOS: bash 3.2, the default shell of the developers' machines
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        if: runner.os == 'Linux'
+        run: shellcheck bin/deploy tests/deploy-test.sh
+      - name: Test bin/deploy
+        run: tests/deploy-test.sh

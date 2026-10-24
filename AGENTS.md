@@ -100,6 +100,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 ## Git & commits
 
 - Never run `git commit`, `git add` or `git push` on your own. Prepare the commit message and let the user commit.
+- Never deploy (`vendor/bin/deploy`) on your own; the user deploys (see [tooling.md](standards/tooling.md),
+  section 8).
 - Inspect the actual changes (`git status`, `git diff`, `git diff --staged`) before proposing a commit message.
 - Commit messages follow [git.md](standards/git.md) (Conventional Commits, short and clean).
 

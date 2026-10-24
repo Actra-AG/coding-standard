@@ -12,6 +12,7 @@
       "homepage": "https://www.actra.ch"
     }
   ],
+  "bin": ["bin/deploy"],
   "require": {
     "php": ">=8.5",
     "friendsofphp/php-cs-fixer": "^3.95",

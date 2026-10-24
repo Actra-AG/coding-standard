@@ -3,6 +3,18 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.33.0 (2026-10-24)
+
+- Applications deploy with `vendor/bin/deploy [<tag|branch|commit>]` from the developer's machine instead of a manual
+  `git pull` on the server ([tooling.md](standards/tooling.md), section 8). To adopt it in a project:
+  - Add `deploy.json` to the project root ([template](templates/deploy.json)): SSH alias, project root on the server,
+    `defaultRef` (`latest-tag` or a branch), `clearDirectories`, optional `after` commands.
+  - Every developer who deploys defines the SSH alias in `~/.ssh/config` (`HostName`, `User`, `Port`,
+    `IdentityFile`).
+  - Ignore `/deploy.log` in `.gitignore` (a whitelist `.gitignore` already does), commit it, and make sure the server
+    checkout has no local changes and its document root is `public/`.
+  - Locally `jq` is required (included in macOS 15 and newer).
+
 ## v1.32.0 (2026-10-23)
 
 - The rule against real data in examples also covers user-facing documentation (help pages, articles, `README.md`,

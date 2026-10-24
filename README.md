@@ -11,6 +11,8 @@ This repository is public: rules only, never project data, credentials, hostname
 - [AGENTS.md](AGENTS.md): entry point with the working rules and links to all [standards/](standards)
 - [config/](config): shared PHPStan and PHP-CS-Fixer configuration
 - [templates/](templates): starter files for projects
+- [bin/deploy](bin/deploy): deploys applications to their server (`vendor/bin/deploy`, see
+  [tooling.md](standards/tooling.md), section 8)
 
 ## Usage
 
@@ -21,7 +23,8 @@ This repository is public: rules only, never project data, credentials, hostname
 2. Copy the files from [templates/](templates) into the project root and adapt them (project part of
    `AGENTS.md`, license in the header of `.php-cs-fixer.dist.php`). The npm files only for projects with own CSS or
    JavaScript ([html-javascript.md](standards/html-javascript.md), section 4). `.github/workflows/release.yml` only
-   for packages hosted on GitHub ([versioning.md](standards/versioning.md), section 1).
+   for packages hosted on GitHub ([versioning.md](standards/versioning.md), section 1). `deploy.json` only for
+   applications deployed to a server ([tooling.md](standards/tooling.md), section 8).
 3. Add the Composer scripts from [tooling.md](standards/tooling.md) and make `composer check` green (PHPStan baseline
    for legacy code). Projects with request and session objects also include
    [phpstan-no-superglobals.neon](config/phpstan-no-superglobals.neon).

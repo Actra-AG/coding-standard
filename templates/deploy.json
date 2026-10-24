@@ -1,0 +1,7 @@
+{
+  "host": "example-production",
+  "path": "/var/www/vhosts/example.com/httpdocs",
+  "defaultRef": "latest-tag",
+  "clearDirectories": ["app/cache/v*/"],
+  "after": []
+}

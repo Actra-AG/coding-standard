@@ -13,6 +13,8 @@
 !/UPGRADE.md
 
 # Allow specific directories
+!/bin/
+!/bin/**
 !/.github/
 !/.github/**
 !/docs/
@@ -23,3 +25,5 @@
 !/standards/**
 !/templates/
 !/templates/**
+!/tests/
+!/tests/**
