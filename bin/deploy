@@ -256,8 +256,8 @@ remote_deploy() {
     || remote_fail 'the live commit changed since the check; run deploy again'
   [[ $(git status --porcelain) == '' ]] || remote_fail 'the working tree on the server has local changes'
 
-  echo '> git fetch --tags origin'
-  git fetch --quiet --tags origin
+  echo '> git fetch --tags --force origin'
+  git fetch --tags --force origin
   git cat-file -e "$deploy_target^{commit}" 2> /dev/null \
     || remote_fail "commit $deploy_target not found after fetching origin"
 
@@ -340,7 +340,7 @@ git remote get-url origin > /dev/null 2>&1 || fail 'the project has no remote na
 read_config
 
 echo 'Fetching origin …'
-git fetch --quiet --tags origin
+git fetch --tags --force origin
 origin_refs=$(git ls-remote --heads --tags origin)
 resolve_ref "$ref"
 

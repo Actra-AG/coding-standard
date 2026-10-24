@@ -181,6 +181,19 @@ check 'tag as rollback: removed commits shown' grep -qF 'Removed commits (1):' "
 expect_success 'commit hash' --yes "$(origin_commit v1.0.0)"
 check 'commit hash: commit' test "$(server_head)" = "$(origin_commit v1.0.0)"
 
+# A tag moved on origin: the server and the developer's clone still have the old one
+stale_commit=$(origin_commit v1.2.0)
+git -C "$dev" tag -f -a v1.2.0 -m v1.2.0 "$(origin_commit v1.10.0)" > /dev/null
+git -C "$dev" push --quiet --force origin v1.2.0
+git -C "$dev" tag -f -a v1.2.0 -m v1.2.0 "$stale_commit" > /dev/null
+expect_success 'moved tag' --yes v1.2.0
+check 'moved tag: commit of origin' test "$(server_head)" = "$(origin_commit v1.10.0)"
+check 'moved tag: updated locally' test "$(origin_commit v1.2.0)" = "$(origin_commit v1.10.0)"
+
+git -C "$server" remote set-url origin "$work/missing.git"
+expect_failure 'fetch error shown' 'does not appear to be a git repository' --yes v1.0.0
+git -C "$server" remote set-url origin "$work/origin.git"
+
 echo 'unpushed' > "$dev/unpushed.txt"
 git -C "$dev" add unpushed.txt
 git -C "$dev" commit --quiet -m 'unpushed'
@@ -190,7 +203,7 @@ git -C "$dev" reset --quiet --hard HEAD~1
 
 echo 'changed' >> "$server/composer.json"
 expect_failure 'local changes on the server' 'the working tree on the server has local changes' --yes
-check 'local changes on the server: unchanged' test "$(server_head)" = "$(origin_commit v1.0.0)"
+check 'local changes on the server: unchanged' test "$(server_head)" = "$(origin_commit v1.10.0)"
 git -C "$server" checkout --quiet -- composer.json
 
 write_config main

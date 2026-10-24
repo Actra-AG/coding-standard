@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.33.1 (2026-10-24)
+
+- `vendor/bin/deploy` takes moved tags from origin (locally and on the server) instead of failing, and shows Git's
+  error messages when fetching fails.
+
 ## v1.33.0 (2026-10-24)
 
 - Applications deploy with `vendor/bin/deploy [<tag|branch|commit>]` from the developer's machine instead of a manual
