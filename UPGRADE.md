@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.34.0 (2026-10-25)
+
+- `clearDirectories` of `deploy.json` allows character classes (`[0-9]`). yuf projects: change `app/cache/v*/` to
+  `app/cache/v[0-9]*/`, because `v*` also deletes `app/cache/values/` (yuf's `FileCache`).
+- `deploy` targets `main` by default (template `"defaultRef": "main"`): `main` is what runs in production, unfinished
+  work stays on branches ([tooling.md](standards/tooling.md), section 8). Projects with `latest-tag` may keep it.
+
 ## v1.33.1 (2026-10-24)
 
 - `vendor/bin/deploy` takes moved tags from origin (locally and on the server) instead of failing, and shows Git's

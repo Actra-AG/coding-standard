@@ -39,11 +39,13 @@ quote() {
 validate_clear_pattern() {
   local pattern=$1 segment
   local -a segments
-  [[ $pattern =~ ^[A-Za-z0-9._*?/-]+$ ]] \
-    || fail "clearDirectories: \"$pattern\" may only contain letters, digits and . _ - / * ?"
+  # Character classes ([0-9]) allowed, e.g. app/cache/v[0-9]*/ keeps yuf's FileCache in app/cache/values/
+  local allowed='^[]A-Za-z0-9._*?/[-]+$'
+  [[ $pattern =~ $allowed ]] \
+    || fail "clearDirectories: \"$pattern\" may only contain letters, digits and . _ - / * ? [ ]"
   [[ $pattern != /* ]] || fail "clearDirectories: \"$pattern\" must be relative to the project root"
   IFS=/ read -r -a segments <<< "${pattern%/}"
-  [[ ${segments[0]} != *[*?]* ]] \
+  [[ ${segments[0]} != *[*?[]* ]] \
     || fail "clearDirectories: the first directory of \"$pattern\" must be named without wildcards"
   for segment in "${segments[@]}"; do
     case $segment in

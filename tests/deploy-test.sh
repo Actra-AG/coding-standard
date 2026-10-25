@@ -84,7 +84,7 @@ origin_commit() {
 }
 
 write_config() {
-  local default_ref=$1 after=${2:-'["touch after-ran"]'} clear=${3:-'["app/cache/v*/"]'}
+  local default_ref=$1 after=${2:-'["touch after-ran"]'} clear=${3:-'["app/cache/v[0-9]*/"]'}
   cat > "$dev/deploy.json" <<JSON
 {
   "host": "test-server",
@@ -137,6 +137,10 @@ write_config latest-tag '[]' '["/tmp/cache/"]'
 expect_failure 'clear: no absolute path' 'must be relative to the project root' --yes
 write_config latest-tag '[]' '["*/cache/"]'
 expect_failure 'clear: first directory named' 'must be named without wildcards' --yes
+write_config latest-tag '[]' '["[a]pp/cache/"]'
+expect_failure 'clear: first directory without class' 'must be named without wildcards' --yes
+write_config latest-tag '[]' '["app/{cache}/"]'
+expect_failure 'clear: no braces' 'may only contain' --yes
 write_config latest-tag '[]' '[""]'
 expect_failure 'clear: no empty glob' 'may only contain' --yes
 write_config latest-tag '[]' '["app/c ache/"]'
@@ -156,7 +160,8 @@ check 'no SSH call with an invalid configuration' test ! -s "$FAKE_SSH_LOG"
 
 write_config latest-tag
 mkdir -p "$server/app/cache/v1/sub" "$server/app/cache/v2" "$work/outside/v3"
-touch "$server/app/cache/v1/sub/file" "$server/app/cache/keep" "$work/outside/v3/file"
+mkdir -p "$server/app/cache/values"
+touch "$server/app/cache/v1/sub/file" "$server/app/cache/keep" "$server/app/cache/values/token" "$work/outside/v3/file"
 ln -s "$work/outside/v3" "$server/app/cache/v3"
 
 expect_failure 'confirmation without terminal' 'no terminal to confirm; use --yes'
@@ -168,6 +173,7 @@ check 'composer install' grep -qx 'composer install --no-dev --optimize-autoload
   "$FAKE_COMPOSER_LOG"
 check 'cleared directories' test ! -e "$server/app/cache/v1" -a ! -e "$server/app/cache/v2"
 check 'kept other files' test -f "$server/app/cache/keep"
+check 'kept FileCache (values)' test -f "$server/app/cache/values/token"
 check 'symlink removed, target kept' test ! -e "$server/app/cache/v3" -a -f "$work/outside/v3/file"
 check 'after command' test -f "$server/after-ran"
 log_line=$'\tok\tv1.10.0\t'"$(origin_commit v1.10.0)"$'\t'"$(origin_commit main)"$'\tTest Developer <developer@example.com>$'

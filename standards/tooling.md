@@ -168,19 +168,25 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   `composer install --no-dev --optimize-autoloader --no-interaction`, deletes the `clearDirectories`, runs the `after`
   commands and appends a line to `deploy.log`. At the end it prints the live and the previous commit; a rollback is
   `vendor/bin/deploy <previous commit>`.
+- **`main` is production:** by default `deploy` deploys `main` (`"defaultRef": "main"`), so `main` is always what runs
+  in production and a forgotten tag never holds a release back. Only what may go live is merged to `main`; unfinished
+  work and templates before the frontend review stay on a branch. Projects that deploy only released versions set
+  `latest-tag`.
 - **Configuration:** `deploy.json` in the project root, committed (see [template](../templates/deploy.json)). Unknown
   keys and invalid values stop the deployment.
 
-  | Key                | Value                                                                                       |
-  |:-------------------|:--------------------------------------------------------------------------------------------|
-  | `host`             | SSH alias of the server (see below)                                                         |
-  | `path`             | Absolute path of the project root on the server (the Git checkout)                          |
-  | `defaultRef`       | `latest-tag` (highest `vMAJOR.MINOR.PATCH` tag, no pre-releases) or a branch, e.g. `main`   |
-  | `clearDirectories` | Globs relative to the project root, deleted after `composer install` (`["app/cache/v*/"]`)  |
-  | `after`            | Optional shell commands, run in the project root at the end                                 |
+  | Key                | Value                                                                                            |
+  |:-------------------|:-------------------------------------------------------------------------------------------------|
+  | `host`             | SSH alias of the server (see below)                                                              |
+  | `path`             | Absolute path of the project root on the server (the Git checkout)                               |
+  | `defaultRef`       | A branch, by default `main`, or `latest-tag` (highest `vMAJOR.MINOR.PATCH` tag, no pre-releases) |
+  | `clearDirectories` | Globs relative to the project root, deleted after `composer install` (`["app/cache/v[0-9]*/"]`)  |
+  | `after`            | Optional shell commands, run in the project root at the end                                      |
 
   `clearDirectories` never leave the project root: no absolute paths, no `.`, `..` or `.git` segments, no empty
   globs, the first directory named without wildcards; matches outside the root (symbolic links) stop the deployment.
+  In yuf projects use `app/cache/v[0-9]*/` (compiled templates, `v` + format version), never `app/cache/v*/`: that also
+  matches `app/cache/values/`, yuf's `FileCache`.
 - **SSH:** `host` is an alias of `~/.ssh/config` with `HostName`, `User`, `Port` and `IdentityFile`. Every developer
   who deploys defines the same alias; user, port and key never go into the project.
 - **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash, Git, Composer and
