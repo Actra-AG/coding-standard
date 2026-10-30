@@ -189,10 +189,10 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   matches `app/cache/values/`, yuf's `FileCache`.
 - **SSH:** `host` is an alias of `~/.ssh/config` with `HostName`, `User`, `Port` and `IdentityFile`. Every developer
   who deploys defines the same alias; user, port and key never go into the project.
-- **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash, Git, Composer and
-  PHP on the `PATH` of a login shell. The web server's document root is `public/`, so `.git/`, `.env.php`,
-  `deploy.log` and everything else outside `public/` is never reachable from the web. Nobody edits files of the
-  checkout on the server; server-specific files are ignored by Git.
+- **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash (4.2 or newer, or
+  the `date` command), Git, Composer and PHP on the `PATH` of a login shell. The web server's document root is
+  `public/`, so `.git/`, `.env.php`, `deploy.log` and everything else outside `public/` is never reachable from the
+  web. Nobody edits files of the checkout on the server; server-specific files are ignored by Git.
 - **Log:** `deploy.log` in the project root gets one tab-separated line per deployment: UTC time, `ok` or `failed`,
   ref, live commit, previous commit, Git user of the developer. The project ignores it in `.gitignore` (`/deploy.log`;
   a whitelist `.gitignore` already does); `deploy` refuses to run otherwise.

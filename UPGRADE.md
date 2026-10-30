@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v1.34.1 (2026-10-30)
+
+- `vendor/bin/deploy` writes the time of `deploy.log` with the `printf` builtin of bash 4.2 or newer, because chroot
+  shells (e.g. Plesk) have no `date` command; the time was empty there. Older bash versions still use `date`.
+
 ## v1.34.0 (2026-10-25)
 
 - `clearDirectories` of `deploy.json` allows character classes (`[0-9]`). yuf projects: change `app/cache/v*/` to

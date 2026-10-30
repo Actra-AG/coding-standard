@@ -26,6 +26,14 @@ while [[ $1 == -* ]]; do shift; done
 printf '%s\n' "$1" >> "$FAKE_SSH_LOG"
 shift
 command="$*"
+# Chroot shells without date (e.g. Plesk)
+if [[ ${FAKE_NO_DATE:-} == 1 ]]; then
+  date() {
+    echo 'bash: date: command not found' >&2
+    return 127
+  }
+  export -f date
+fi
 exec bash -c "${command/#bash -lc /bash -c }"
 SSH
 cat > "$work/bin/composer" <<'COMPOSER'
@@ -74,6 +82,8 @@ check() {
   shift
   if "$@"; then echo "ok: $name"; else fail_test "$name"; fi
 }
+
+time_pattern='[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z'
 
 server_head() {
   git -C "$server" rev-parse HEAD
@@ -178,6 +188,7 @@ check 'symlink removed, target kept' test ! -e "$server/app/cache/v3" -a -f "$wo
 check 'after command' test -f "$server/after-ran"
 log_line=$'\tok\tv1.10.0\t'"$(origin_commit v1.10.0)"$'\t'"$(origin_commit main)"$'\tTest Developer <developer@example.com>$'
 check 'log line' grep -q "$log_line" "$server/deploy.log"
+check 'log line: UTC time' grep -qE "^$time_pattern"$'\tok\tv1.10.0\t' "$server/deploy.log"
 check 'rollback hint' grep -qF "Roll back with: vendor/bin/deploy $(origin_commit main)" "$work/out"
 
 expect_success 'tag as rollback' --yes v1.2.0
@@ -216,6 +227,16 @@ write_config main
 expect_success 'default branch' --yes
 check 'default branch: commit' test "$(server_head)" = "$(origin_commit origin/main)"
 check 'default branch: on branch' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
+
+# The printf builtin of bash 4.2+ writes the time without date
+if bash -c '(( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 402 ))'; then
+  export FAKE_NO_DATE=1
+  expect_success 'without date' --yes v1.2.0
+  unset FAKE_NO_DATE
+  check 'without date: time logged' grep -qE "^$time_pattern"$'\tok\tv1.2.0\t' <(tail -n 1 "$server/deploy.log")
+else
+  echo 'skip: without date (bash older than 4.2)'
+fi
 
 write_config main '["touch after-ran", "false"]'
 expect_failure 'failing after command' 'deployment failed' --yes v1.2.0

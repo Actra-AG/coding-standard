@@ -4,7 +4,7 @@
 # Deploys the project to its server over SSH: the server checkout switches to a commit that exists on origin, then
 # runs composer install, clears the configured directories and runs the configured commands. Configuration:
 # deploy.json in the project root. Runs on the developer's machine with bash 3.2 or newer (macOS default), git, ssh
-# and jq; the server needs bash, git and composer.
+# and jq; the server needs bash (4.2 or newer, or the date command), git and composer.
 
 set -euo pipefail
 
@@ -226,7 +226,10 @@ remote_inspect() {
 
 remote_write_log() {
   [[ $deploy_switched == 1 ]] || return 0
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$deploy_status" "$deploy_ref" \
+  # printf builtin of bash 4.2+, because chroot shells (e.g. Plesk) have no date; date for older bash versions
+  deploy_time=$(TZ=UTC0 printf '%(%Y-%m-%dT%H:%M:%SZ)T' -1 2> /dev/null) \
+    || deploy_time=$(date -u +%Y-%m-%dT%H:%M:%SZ) || true
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$deploy_time" "$deploy_status" "$deploy_ref" \
     "$(git -C "$deploy_root" rev-parse HEAD)" "$deploy_previous" "$deploy_user" >> "$deploy_root/deploy.log"
 }
 
