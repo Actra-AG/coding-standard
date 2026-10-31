@@ -21,5 +21,39 @@
     "phpstan/phpstan-phpunit": "^2.1",
     "phpstan/phpstan-strict-rules": "^2.1",
     "spaze/phpstan-disallowed-calls": "^4.14"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^13.4.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "actra\\codingStandard\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "actra\\codingStandard\\tests\\": "tests/"
+    },
+    "files": [
+      "tests/Unit/phpstan/data/functions.php"
+    ]
+  },
+  "scripts": {
+    "cs": "php-cs-fixer check --diff",
+    "cs:fix": "php-cs-fixer fix",
+    "phpstan": "phpstan analyse --memory-limit=-1",
+    "test": "phpunit",
+    "check": [
+      "@cs",
+      "@phpstan",
+      "@test"
+    ]
+  },
+  "scripts-descriptions": {
+    "cs": "Check the code style (PER Coding Style)",
+    "cs:fix": "Fix the code style",
+    "phpstan": "Run the static analysis (PHPStan level 10, strict)",
+    "test": "Run all tests",
+    "check": "Check the code style, run the static analysis and all tests"
   }
 }

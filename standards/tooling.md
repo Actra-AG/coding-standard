@@ -18,6 +18,7 @@ enforce them, with a shared configuration:
 | [phpstan-deprecation-rules](https://github.com/phpstan/phpstan-deprecation-rules) | Reports usage of deprecated code                         |
 | [phpstan-phpunit](https://github.com/phpstan/phpstan-phpunit)                     | Correct types and checks for PHPUnit tests               |
 | [phpstan-disallowed-calls](https://github.com/spaze/phpstan-disallowed-calls)     | Forbids `isset()`, `is_null()`, `switch`, insecure calls |
+| Own PHPStan rules ([src/phpstan/](../src/phpstan))                                | Named arguments in parameter order                       |
 | [PHP-CS-Fixer](https://cs.symfony.com)                                            | PER Coding Style, file header, strict types              |
 
 PHPUnit is installed by the project itself (`composer require --dev phpunit/phpunit`), because its version depends on
@@ -71,6 +72,9 @@ Every task and every commit must end with a green `composer check`.
   property may be assigned once after construction (see [php.md](php.md), section 3); projects do not ignore them
   again.
   [config/disallowed.neon](../config/disallowed.neon) forbids the constructs banned by this standard.
+  The own rules in [src/phpstan/](../src/phpstan) (autoloaded by Composer) report rules of this standard that no
+  extension covers: `actra.namedArgumentOrder` reports named arguments that are not in the order of the parameters
+  (see [php.md](php.md), section 4).
 - The project only adds `phpVersion` (matching the minimum PHP version), the analysed paths and, if needed, the
   baseline. Analysed paths include all PHP code (`src/`, `tests/`, application code). Only generated code (caches,
   generated data files) is excluded. Do not lower the level, disable rules or add exclusions for hand-written code.

@@ -19,12 +19,18 @@ use PhpCsFixer\Fixer\Comment\HeaderCommentFixer;
  * $thirdParty: one entry per adapted folder; `contains` limits it to files containing that text, for folders that
  * mix own and adapted code, e.g. ['path' => '/src/mailer/', 'license' => 'LGPL-2.1-only', 'contains' => 'PHPMailer'].
  *
- * @return Closure(string, string, list<array{path: string, license: string, contains?: string}>): array{
- *     rule: array{header: string, comment_type: string, location: string, separate: string},
+ * @return Closure(
+ *     string $copyright,
+ *     string $license,
+ *     list<array{path: string, license: string, contains?: string}> $thirdParty
+ * ): array{
+ *     rule: array{header: string, comment_type: 'PHPDoc', location: 'after_open', separate: 'both'},
  *     policy: RuleCustomisationPolicyInterface,
  * }
  */
 return static function (string $copyright, string $license, array $thirdParty): array {
+    // The type of the @return closure above, which PHPStan checks in the project's .php-cs-fixer.dist.php
+    /** @var list<array{path: string, license: string, contains?: string}> $thirdParty */
     $rule = static fn(string $license): array => [
         'header' => '@copyright ' . $copyright . "\n@license   " . $license,
         'comment_type' => 'PHPDoc',
@@ -34,14 +40,19 @@ return static function (string $copyright, string $license, array $thirdParty): 
     $policy = new readonly class ($thirdParty, $rule) implements RuleCustomisationPolicyInterface {
         /**
          * @param list<array{path: string, license: string, contains?: string}> $thirdParty
-         * @param Closure(string): array{header: string, comment_type: string, location: string, separate: string} $rule
+         * @param Closure(string): array{
+         *     header: string,
+         *     comment_type: 'PHPDoc',
+         *     location: 'after_open',
+         *     separate: 'both',
+         * } $rule
          */
         public function __construct(
             private array $thirdParty,
             private Closure $rule,
-        ) {
-        }
+        ) {}
 
+        #[Override]
         public function getPolicyVersionForCache(): string
         {
             // Changes with this file, the third-party entries and the header text (copyright)
@@ -50,6 +61,7 @@ return static function (string $copyright, string $license, array $thirdParty): 
             return hash(algo: 'xxh128', data: hash_file(algo: 'xxh128', filename: __FILE__) . $settings);
         }
 
+        #[Override]
         public function getRuleCustomisers(): array
         {
             return [

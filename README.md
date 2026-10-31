@@ -10,6 +10,7 @@ This repository is public: rules only, never project data, credentials, hostname
 
 - [AGENTS.md](AGENTS.md): entry point with the working rules and links to all [standards/](standards)
 - [config/](config): shared PHPStan and PHP-CS-Fixer configuration
+- [src/phpstan/](src/phpstan): own PHPStan rules, enabled by the shared configuration
 - [templates/](templates): starter files for projects
 - [bin/deploy](bin/deploy): deploys applications to their server (`vendor/bin/deploy`, see
   [tooling.md](standards/tooling.md), section 8)

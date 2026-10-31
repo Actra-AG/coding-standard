@@ -1,0 +1,34 @@
+# Parameters, disallowed calls and own rules of the shared PHPStan configuration, without the includes of the
+# extensions (their paths depend on the vendor directory). Included by phpstan.neon; projects include phpstan.neon.
+
+includes:
+    - disallowed.neon
+
+rules:
+    - actra\codingStandard\phpstan\NamedArgumentOrderRule
+
+parameters:
+    level: 10
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkMissingCallableSignature: true
+    checkMissingOverrideMethodAttribute: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkTooWideParameterOutInProtectedAndPublicMethods: true
+    checkTooWideThrowTypesInProtectedAndPublicMethods: true
+    reportPossiblyNonexistentGeneralArrayOffset: true
+    reportPossiblyNonexistentConstantArrayOffset: true
+    reportAlwaysTrueInLastCondition: true
+    reportNonIntStringArrayKey: true
+    reportAnyTypeWideningInVarTag: true
+    rememberPossiblyImpureFunctionValues: false
+    reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        # A native readonly property may be assigned once after construction (write-once, enforced by PHP), see
+        # standards/php.md, section 3. @readonly PHPDoc properties are not enforced by PHP and stay reported.
+        -
+            identifier: property.readOnlyAssignNotInConstructor
+            reportUnmatched: false
+        -
+            identifier: property.uninitializedReadonly
+            reportUnmatched: false

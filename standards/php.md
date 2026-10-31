@@ -93,6 +93,9 @@ declare(strict_types=1);
 
 - **Named arguments for all calls**, also for PHP functions: `trim(string: $value)`. Exception: methods marked
   `@no-named-arguments` (e.g. PHPUnit's `assert*()`) and variadic calls are called with positional arguments.
+- Named arguments follow the parameter order of the called function: `create(logger: $logger, title: 'overview')`
+  for `create(Logger $logger, string $title)`. PHP accepts any order, but readers and reviewers expect the declared
+  one. PHPStan reports a different order (`actra.namedArgumentOrder`, see [tooling.md](tooling.md), section 3).
 - Refer to the own class by its name (`FormField::create()`), not `self::` / `static::`. `static::` only where late
   static binding is intended.
 - `match` instead of `switch`. No `@` error suppression.

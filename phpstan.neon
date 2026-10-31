@@ -1,0 +1,26 @@
+# The shared configuration (config/phpstan.neon) includes the extensions relative to vendor/actra/coding-standard/;
+# this repository includes them from its own vendor/ directory and the rest from config/phpstan-base.neon.
+includes:
+    - phar://phpstan.phar/conf/bleedingEdge.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/spaze/phpstan-disallowed-calls/extension.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-dangerous-calls.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-execution-calls.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-insecure-calls.neon
+    - vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
+    - config/phpstan-base.neon
+
+parameters:
+    phpVersion: 80500
+    paths:
+        - config
+        - src
+        - tests
+        # Same code as templates/.php-cs-fixer.dist.php, whose paths only exist in projects
+        - .php-cs-fixer.dist.php
+    excludePaths:
+        # Fixtures of the rule tests, with deliberate errors
+        - tests/Unit/phpstan/data

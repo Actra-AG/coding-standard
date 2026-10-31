@@ -5,10 +5,13 @@
 !/.editorconfig
 !/.gitattributes
 !/.gitignore
+!/.php-cs-fixer.dist.php
 !/AGENTS.md
 !/CLAUDE.md
 !/composer.json
 !/LICENSE
+!/phpstan.neon
+!/phpunit.xml
 !/README.md
 !/UPGRADE.md
 
@@ -21,6 +24,8 @@
 !/docs/**
 !/config/
 !/config/**
+!/src/
+!/src/**
 !/standards/
 !/standards/**
 !/templates/
