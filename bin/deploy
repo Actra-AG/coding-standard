@@ -156,6 +156,8 @@ resolve_ref() {
     fail "$ref is a tag and a branch on origin; deploy the commit instead"
   fi
   target_commit=$tag_commit$branch_commit
+  # The defaultRef branch stays checked out as branch; other branches are temporary, deployed detached
+  [[ $branch_commit == '' || $ref != "$default_ref" ]] || target_branch=$ref
   if [[ $target_commit == '' ]]; then
     [[ $ref =~ ^[0-9a-f]{7,40}$ ]] || fail "$ref is no tag or branch on origin and no commit hash"
     target_commit=$(git rev-parse --verify --quiet "$ref^{commit}") || fail "unknown or ambiguous commit: $ref"

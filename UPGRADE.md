@@ -3,6 +3,11 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.0.1 (2026-11-02)
+
+- `vendor/bin/deploy main` (the `defaultRef` branch named explicitly) checks out the branch with a fast-forward like
+  `vendor/bin/deploy`; it left the server checkout detached. Other branches stay detached.
+
 ## v2.0.0 (2026-10-31)
 
 - ⚠️ Raise the constraint to `"actra/coding-standard": "^2.0"` (`composer require --dev actra/coding-standard:^2.0`);

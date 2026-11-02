@@ -228,6 +228,17 @@ expect_success 'default branch' --yes
 check 'default branch: commit' test "$(server_head)" = "$(origin_commit origin/main)"
 check 'default branch: on branch' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
 
+expect_success 'tag before explicit branch' --yes v1.2.0
+expect_success 'default branch explicit' --yes main
+check 'default branch explicit: commit' test "$(server_head)" = "$(origin_commit origin/main)"
+check 'default branch explicit: on branch' test "$(git -C "$server" symbolic-ref --short -q HEAD)" = main
+check 'default branch explicit: shown as branch' grep -qF '← main (branch, fast-forward)' "$work/out"
+
+git -C "$dev" push --quiet origin "$(origin_commit v1.2.0):refs/heads/feature"
+expect_success 'other branch' --yes feature
+check 'other branch: commit' test "$(server_head)" = "$(origin_commit v1.2.0)"
+check 'other branch: detached' test "$(git -C "$server" symbolic-ref -q HEAD || echo detached)" = detached
+
 # The printf builtin of bash 4.2+ writes the time without date
 if bash -c '(( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 402 ))'; then
   export FAKE_NO_DATE=1

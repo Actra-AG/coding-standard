@@ -168,10 +168,10 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
 - **Steps:** locally, `deploy` fetches origin, resolves the ref (only commits on origin, never unpushed ones), reads the
   live commit on the server, shows both with the commits in between and asks for confirmation. Then, in one SSH call
   on the server, it stops if the working tree has local changes, runs `git fetch --tags`, checks out the commit (the
-  `defaultRef` branch with a fast-forward, any other ref detached), runs
-  `composer install --no-dev --optimize-autoloader --no-interaction`, deletes the `clearDirectories`, runs the `after`
-  commands and appends a line to `deploy.log`. At the end it prints the live and the previous commit; a rollback is
-  `vendor/bin/deploy <previous commit>`.
+  `defaultRef` branch, without a ref or named explicitly, with a fast-forward, so the checkout stays on `main`; other
+  branches, tags and commits detached), runs `composer install --no-dev --optimize-autoloader --no-interaction`,
+  deletes the `clearDirectories`, runs the `after` commands and appends a line to `deploy.log`. At the end it prints
+  the live and the previous commit; a rollback is `vendor/bin/deploy <previous commit>`.
 - **`main` is production:** by default `deploy` deploys `main` (`"defaultRef": "main"`), so `main` is always what runs
   in production and a forgotten tag never holds a release back. Only what may go live is merged to `main`; unfinished
   work and templates before the frontend review stay on a branch. Projects that deploy only released versions set
