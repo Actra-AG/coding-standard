@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.1.0 (2026-11-06)
+
+- `UPDATE` and `DELETE` filter only by the primary key or a unique key; set-based changes first select the IDs, then
+  update or delete `WHERE id IN (…)` in the same transaction. No `UPDATE … JOIN …`. Such statements break MariaDB's
+  safe update mode (on by default in `actra/yuf`) only with production data volumes (error 1175)
+  ([performance.md](standards/performance.md), section 2). Existing statements are migrated when their code is
+  changed; never switch safe update mode off.
+
 ## v2.0.1 (2026-11-02)
 
 - `vendor/bin/deploy main` (the `defaultRef` branch named explicitly) checks out the branch with a fast-forward like

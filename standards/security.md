@@ -57,6 +57,8 @@ Order: **read → sanitize (normalize) → validate → use typed values.**
 - Identifiers that cannot be bound (column, table, sort direction) are validated against a whitelist or an enum.
 - `LIKE` patterns: escape `%`, `_` and the escape character in the search term and bind it as parameter.
 - Use the least privileged database user the application needs.
+- `UPDATE` and `DELETE` filter only by key columns, so they work with safe update mode, which stays on (see
+  [performance.md](performance.md), section 2).
 
 ## 5. CSRF
 

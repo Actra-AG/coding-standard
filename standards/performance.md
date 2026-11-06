@@ -30,6 +30,12 @@ fastest solution that is secure and correct, even if it is longer or less conven
   `actra/yuf` use `DbResultTable::addSortTieBreaker()` (from yuf v6.3.0).
 - Index the columns used in `WHERE`, `JOIN` and `ORDER BY`; check new queries on large tables with `EXPLAIN`.
 - Write many rows in one statement or one transaction.
+- `UPDATE` and `DELETE` filter only by the primary key or a unique key: `WHERE id=?` or `WHERE id IN (…)`. Set-based
+  changes (all open rows of a customer) first select the IDs and then update or delete by ID, in the same
+  transaction. No `UPDATE … JOIN …` and no `UPDATE` or `DELETE` whose condition uses only non-key columns. Reason:
+  `actra/yuf` enables MariaDB's safe update mode on every connection (`DbSettings::$sqlSafeUpdates`), and whether
+  MariaDB accepts such a statement depends on the query plan, so on the data volume: it passes locally and fails in
+  production with error 1175. Never switch safe update mode off to work around it.
 
 ## 3. Caching
 
