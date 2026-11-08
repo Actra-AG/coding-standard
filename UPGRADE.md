@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.2.0 (2026-11-08)
+
+- ⚠️ Never name the variadic parameter of a PHP built-in: `array_map(callback: $f, array: $a, arrays: $b)` throws an
+  `ArgumentCountError` at runtime, and PHPStan did not report it ([php.md](standards/php.md), section 4). The new rule
+  `actra.namedVariadicArgument` reports it. Fix findings by passing all arguments positionally
+  (`array_map($f, $a, $b)`) or by spreading a list (`array_push($list, ...$values)`); do not add them to the baseline.
+  Project tests that search for such calls (e.g. for `arrays:`) can be removed.
+
 ## v2.1.0 (2026-11-06)
 
 - `UPDATE` and `DELETE` filter only by the primary key or a unique key; set-based changes first select the IDs, then

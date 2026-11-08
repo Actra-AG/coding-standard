@@ -4,8 +4,12 @@
 includes:
     - disallowed.neon
 
+services:
+    - actra\codingStandard\phpstan\CalleeFinder
+
 rules:
     - actra\codingStandard\phpstan\NamedArgumentOrderRule
+    - actra\codingStandard\phpstan\NamedVariadicArgumentRule
 
 parameters:
     level: 10

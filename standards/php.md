@@ -93,6 +93,10 @@ declare(strict_types=1);
 
 - **Named arguments for all calls**, also for PHP functions: `trim(string: $value)`. Exception: methods marked
   `@no-named-arguments` (e.g. PHPUnit's `assert*()`) and variadic calls are called with positional arguments.
+- Never name the variadic parameter of a PHP built-in (`array_map()`, `array_push()`, `array_merge()`, `max()`,
+  `sprintf()`, …): `array_map(callback: $f, array: $a, arrays: $b)` throws an `ArgumentCountError` at runtime only.
+  Pass all arguments positionally (`array_map($f, $a, $b)`) or spread a list (`array_push($list, ...$values)`). PHPStan
+  reports it (`actra.namedVariadicArgument`, see [tooling.md](tooling.md), section 3).
 - Named arguments follow the parameter order of the called function: `create(logger: $logger, title: 'overview')`
   for `create(Logger $logger, string $title)`. PHP accepts any order, but readers and reviewers expect the declared
   one. PHPStan reports a different order (`actra.namedArgumentOrder`, see [tooling.md](tooling.md), section 3).

@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace actra\codingStandard\tests\Unit\phpstan\data;
 
-// Fixture of NamedArgumentOrderRuleTest
+// Fixture of NamedArgumentOrderRuleTest and NamedVariadicArgumentRuleTest
 
 final readonly class Mailer
 {

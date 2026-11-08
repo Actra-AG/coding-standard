@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace actra\codingStandard\tests\Unit\phpstan;
 
+use actra\codingStandard\phpstan\CalleeFinder;
 use actra\codingStandard\phpstan\NamedArgumentOrderRule;
 use Override;
 use PHPStan\Rules\Rule;
@@ -25,7 +26,9 @@ final class NamedArgumentOrderRuleTest extends RuleTestCase
     #[Override]
     protected function getRule(): Rule
     {
-        return new NamedArgumentOrderRule(reflectionProvider: $this->createReflectionProvider());
+        return new NamedArgumentOrderRule(
+            calleeFinder: new CalleeFinder(reflectionProvider: $this->createReflectionProvider()),
+        );
     }
 
     public function testReportsNamedArgumentsNotInParameterOrder(): void
