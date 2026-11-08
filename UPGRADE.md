@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.3.0 (2026-11-08)
+
+- New rules in [AGENTS.md](AGENTS.md) for AI assistants and public repositories: final reports list only what the diff
+  does not show; public repositories are described neutrally; reviewing sessions verify reported changes with
+  `git status` and `git diff`; sub-sessions never change the index or working tree; `composer check` also for
+  documentation-only changes; no project knowledge only in local assistant memory. No action needed in projects.
+
 ## v2.2.0 (2026-11-08)
 
 - ⚠️ Never name the variadic parameter of a PHP built-in: `array_map(callback: $f, array: $a, arrays: $b)` throws an

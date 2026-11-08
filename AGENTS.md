@@ -34,7 +34,8 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Leave every file you touch cleaner than you found it, but keep each change focused on one topic. Do not reformat
   unrelated code.
 - Run `composer check` (code style, PHPStan, tests) before finishing a task (see [tooling.md](standards/tooling.md));
-  it must be green. A PHPStan baseline may only shrink. Fix code style with `composer cs:fix`.
+  it must be green. A PHPStan baseline may only shrink. Fix code style with `composer cs:fix`. This also applies
+  before proposing a commit for documentation- or template-only changes.
 - Without a local PHP of the required version, run PHP and Composer commands through DDEV (`ddev composer check`), if
   the project has a `.ddev/` configuration. If DDEV is not running, ask the user to start it (`ddev start`).
 - Do not add Composer or npm packages without asking. Before adopting third-party code, check that its license is
@@ -68,8 +69,13 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   in a project is such a cause: the library restores the old output (see [versioning.md](standards/versioning.md),
   section 4); the project adapts no templates, CSS or JavaScript to it.
 - Sessions working in parallel never write the same files (`UPGRADE.md`, a plan): they return the text and the
-  reviewing session merges it. The reviewing session checks every reported change with `git diff` instead of trusting
-  the report.
+  reviewing session merges it. The reviewing session checks every reported change with `git status` and `git diff`
+  instead of trusting the report (sessions sometimes report edits to `UPGRADE.md` or plans that they did not make).
+- Sub-sessions never run git commands that change the index or the working tree (`git add`, `git rm`, `git mv`,
+  `git reset`, `git restore`, `git stash`, `git checkout`, `git switch`); read-only git commands are fine.
+- Never keep project knowledge, decisions or open tasks only in the local memory of an AI assistant: it is lost with
+  the machine. Rules and decisions go into git (`AGENTS.md`, `standards/`, `docs/plans/`), open tasks into
+  the team's task tracker.
 - Mention assumptions. Ask when a requirement is ambiguous and the answer changes the result.
 - Before adding a rule to the `AGENTS.md` or the standards of a project, decide whether it applies to every Actra
   project. If so, add it to this coding standard instead (with a release), and keep only the project-specific part in
@@ -83,6 +89,9 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Do not mention the attached context unless it is needed for the answer.
 - When code is requested, show only the changed code blocks, each with its file path. Do not repeat unchanged
   surrounding code.
+- Final reports list only what the diff does not show: decisions, deviations, what was not verified or not done,
+  surprises, open questions, the commit message and the release tag. No file-by-file lists of changes; the user reads
+  the diffs in the IDE.
 - Explain code with short inline comments in the code rather than long markdown paragraphs.
 
 ## Files
@@ -96,12 +105,17 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
 - Projects whose `.gitignore` whitelists tracked files: new top-level files or directories must be added there,
   otherwise they are not committed.
 - Never commit secrets, credentials, personal data or real customer data (see [security.md](standards/security.md)).
+- Public repositories (libraries, skeleton projects) are described neutrally: no customer, project or domain names, no
+  real admin or login paths or directory layouts of live sites, no mail addresses, no hints at security weaknesses of
+  old versions or at which sites still run them. Docs that mention older versions or migrations use generic examples
+  only.
 
 ## Git & commits
 
 - Never run `git commit`, `git add` or `git push` on your own. Prepare the commit message and let the user commit.
 - Never deploy (`vendor/bin/deploy`) on your own; the user deploys (see [tooling.md](standards/tooling.md),
   section 8).
+- Case-only file renames on macOS (`Foo.php` to `foo.php`) need `git mv` by the user.
 - Inspect the actual changes (`git status`, `git diff`, `git diff --staged`) before proposing a commit message.
 - Commit messages follow [git.md](standards/git.md) (Conventional Commits, short and clean).
 
