@@ -31,11 +31,11 @@ Every project defines these scripts in `composer.json`:
 
 ```json
 "scripts": {
-  "cs": "php-cs-fixer check --diff",
-  "cs:fix": "php-cs-fixer fix",
-  "phpstan": "phpstan analyse --memory-limit=-1",
-  "phpstan:baseline": "phpstan analyse --memory-limit=-1 --generate-baseline",
-  "test": "phpunit",
+  "cs": "php-cs-fixer check --diff --show-progress=none",
+  "cs:fix": "php-cs-fixer fix --show-progress=none",
+  "phpstan": "phpstan analyse --memory-limit=-1 --no-progress",
+  "phpstan:baseline": "phpstan analyse --memory-limit=-1 --no-progress --generate-baseline",
+  "test": "phpunit --no-progress",
   "check": [
     "@cs",
     "@phpstan",
@@ -62,6 +62,11 @@ composer check             # cs + phpstan + test
 ```
 
 Every task and every commit must end with a green `composer check`.
+
+The scripts print no progress output, only results and errors: shorter output is faster to read for developers and
+costs AI assistants fewer tokens. While iterating, run only the affected tests
+(`composer test -- --filter UserRepositoryTest`) or files (`composer phpstan -- src/User/`), and the complete
+`composer check` at the end.
 
 ## 3. PHPStan
 

@@ -94,6 +94,26 @@ instructions. Links in this file are relative to this file (`vendor/actra/coding
   the diffs in the IDE.
 - Explain code with short inline comments in the code rather than long markdown paragraphs.
 
+## Token efficiency
+
+Most tokens of an AI session are input: the conversation history, read files and command output, sent again with
+every turn. Save them wherever security and correctness do not suffer; never skip a check or a file the task needs.
+
+- Read only what the task needs: search first, then read the relevant part of large files. Do not read again what is
+  already in the session, e.g. a file you just wrote.
+- Delegate broad searches across many files to a sub-agent that returns only the result.
+- Keep command output short: the Composer scripts print no progress (see [tooling.md](standards/tooling.md),
+  section 2). Run only the affected tests while iterating, the complete `composer check` at the end. Never filter
+  output in a way that can hide errors.
+- One task per session. Suggest a new session for an unrelated task, and for a long task one session per step with
+  handover notes in `docs/plans/<topic>/`.
+- Developers choose model and effort per task: lower for routine changes, higher for design, security and reviews.
+- Keep always-loaded context small: `AGENTS.md` files link details instead of repeating them, and a project enables
+  only the MCP servers and plugins it needs.
+- No token-saving tools that send prompts, code or command output to third-party services (to compress or route
+  them): they may contain customer data. Prompts for a telegraphic answer style are not needed either: the response
+  style above already keeps answers short, and reports must stay complete.
+
 ## Files
 
 - Every file ends with a single newline (see [formatting.md](standards/formatting.md)).

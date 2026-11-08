@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.4.0 (2026-11-08)
+
+- The Composer scripts print no progress output ([tooling.md](standards/tooling.md), section 2): add
+  `--show-progress=none` to `cs` and `cs:fix`, `--no-progress` to `phpstan`, `phpstan:baseline` and `test`.
+- New section "Token efficiency" in [AGENTS.md](AGENTS.md) for AI sessions. No action needed in projects.
+
 ## v2.3.0 (2026-11-08)
 
 - New rules in [AGENTS.md](AGENTS.md) for AI assistants and public repositories: final reports list only what the diff
