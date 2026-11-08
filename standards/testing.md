@@ -84,7 +84,8 @@ phpunit.xml
   PHPStan rejects them as dynamic calls: `CurlRequestTest::markTestSkipped('No network in CI');`.
 - Static helpers (used by static data providers or static closures) do not assert: they throw a `LogicException` for
   an unexpected value (`throw new LogicException(message: 'Fixture missing: ' . $path);`). A helper only called from
-  test methods is non-static and asserts.
+  test methods is non-static and asserts. A shared helper in `tests/Double/` that provides an environment (database,
+  network) skips with `TestCase::markTestSkipped()` when it is missing, so the tests need no own `try`/`catch`.
 - Tests are deterministic: no real clock (inject a `FixedClock`), no random values without fixed seed, no network,
   no dependency on execution order or on other tests.
 - Test doubles are small hand-written classes in `tests/Double/`, implementing the same interface as the production
