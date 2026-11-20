@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Tests bin/deploy end to end with local Git repositories: origin (bare), the developer's clone and the server
 # checkout. Fake ssh and composer commands on PATH run the remote part locally.
+# shellcheck disable=SC2016 # single quotes on purpose: the commands are expanded later (eval, hooks, fake ssh)
 
 set -euo pipefail
 
