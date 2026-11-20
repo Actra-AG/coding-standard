@@ -19,10 +19,14 @@ git config --global user.email 'developer@example.com'
 git config --global init.defaultBranch main
 git config --global advice.detachedHead false
 
-# ssh: records the host and runs the command locally, without the login profile of the test machine
+# ssh: records the host and runs the command locally, without the login profile of the test machine; also called by
+# git fetch (with -o SendEnv=GIT_PROTOCOL)
 cat > "$work/bin/ssh" <<'SSH'
 #!/usr/bin/env bash
-while [[ $1 == -* ]]; do shift; done
+while [[ $1 == -* ]]; do
+  [[ $1 != -o ]] || shift
+  shift
+done
 printf '%s\n' "$1" >> "$FAKE_SSH_LOG"
 shift
 command="$*"
@@ -94,14 +98,15 @@ origin_commit() {
 }
 
 write_config() {
-  local default_ref=$1 after=${2:-'["touch after-ran"]'} clear=${3:-'["app/cache/v[0-9]*/"]'}
+  local default_ref=$1 after=${2:-'["touch after-ran"]'} clear=${3:-'["app/cache/v[0-9]*/"]'} sync=''
+  [[ ${4:-} == '' ]] || sync="\"syncPaths\": $4, "
   cat > "$dev/deploy.json" <<JSON
 {
   "host": "test-server",
   "path": "$server",
   "defaultRef": "$default_ref",
   "clearDirectories": $clear,
-  "after": $after
+  $sync"after": $after
 }
 JSON
 }
@@ -258,6 +263,90 @@ ln -s "$work/outside" "$server/app/cache"
 write_config main '[]'
 expect_failure 'symlinked parent outside the project' 'outside the project root' --yes v1.10.0
 check 'symlinked parent: nothing deleted' test -f "$work/outside/v3/file"
+
+# --- Live changes (syncPaths) ---
+
+rm "$server/app/cache"
+write_config latest-tag '[]' '[]' '["content/"]'
+expect_failure 'sync: needs a branch' 'syncPaths needs a branch as defaultRef' --yes
+write_config main '[]' '[]' '["../content/"]'
+expect_failure 'sync: no ..' 'syncPaths: "../content/" must not contain' --yes
+
+mkdir -p "$dev/content/page" "$dev/site"
+echo 'page' > "$dev/content/page/page.txt"
+echo 'old' > "$dev/content/old.txt"
+echo 'template' > "$dev/site/template.php"
+write_config main '[]' '[]' '["content/", "site/*.html"]'
+git -C "$dev" add content site deploy.json
+git -C "$dev" commit --quiet -m 'content'
+git -C "$dev" push --quiet origin main
+expect_success 'sync: no live changes' --yes
+check 'sync: no live changes: commit' test "$(server_head)" = "$(origin_commit origin/main)"
+check 'sync: no live changes: nothing synced' test "$(git -C "$work/origin.git" rev-parse main)" = "$(server_head)"
+check 'sync: no live changes: not shown' eval '! grep -q "Live changes" "$work/out"'
+
+echo 'version' > "$dev/version.txt"
+git -C "$dev" commit --quiet -am 'new version'
+git -C "$dev" push --quiet origin main
+echo 'edited' >> "$server/content/page/page.txt"
+mkdir "$server/content/new"
+echo 'new' > "$server/content/new/new.txt"
+rm "$server/content/old.txt"
+echo 'html' > "$server/site/view.html"
+live_before=$(server_head)
+expect_success 'sync: live changes' --yes
+check 'sync: files shown' grep -qF '?? content/new/new.txt' "$work/out"
+check 'sync: deployed commit on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
+check 'sync: merge commit' test "$(git -C "$server" rev-list --count --merges "$live_before..HEAD")" = 1
+check 'sync: new version deployed' grep -qx 'version' "$server/version.txt"
+check 'sync: server clean' test "$(git -C "$server" status --porcelain)" = ''
+check 'sync: edits in Git' test "$(git -C "$work/origin.git" show main:content/new/new.txt)" = new
+check 'sync: glob' test "$(git -C "$work/origin.git" show main:site/view.html)" = html
+check 'sync: deletion in Git' eval '! git -C "$work/origin.git" cat-file -e main:content/old.txt 2> /dev/null'
+check 'sync: author' test "$(git -C "$server" log -1 --format='%an <%ae>' HEAD^2)" \
+  = 'Test Developer <developer@example.com>'
+check 'sync: on branch' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
+check 'sync: temporary ref removed' eval '! git -C "$dev" rev-parse -q --verify refs/deploy/live > /dev/null'
+git -C "$dev" pull --quiet --ff-only
+
+echo 'edited again' >> "$server/content/page/page.txt"
+expect_success 'sync: fast-forward' --yes
+check 'sync: fast-forward: no merge commit' test "$(git -C "$server" log -1 --format=%s)" \
+  = 'content: sync live changes from the server'
+check 'sync: fast-forward: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
+git -C "$dev" pull --quiet --ff-only
+
+echo 'changed' >> "$server/site/template.php"
+expect_failure 'sync: changes outside syncPaths' 'local changes outside syncPaths' --yes
+git -C "$server" checkout --quiet -- site/template.php
+
+echo 'edited' >> "$server/content/page/page.txt"
+expect_failure 'sync: other ref' 'deploy main first to sync them' --yes v1.10.0
+check 'sync: other ref: nothing committed' test -n "$(git -C "$server" status --porcelain)"
+
+echo 'developer' >> "$dev/content/page/page.txt"
+git -C "$dev" commit --quiet -am 'conflicting edit'
+git -C "$dev" push --quiet origin main
+live_before=$(server_head)
+expect_failure 'sync: conflict' 'the live changes conflict with main; nothing deployed' --yes
+check 'sync: conflict: file shown' grep -qF '  content/page/page.txt' "$work/out"
+check 'sync: conflict: committed on the server' test "$(git -C "$server" rev-parse HEAD^)" = "$live_before"
+check 'sync: conflict: origin unchanged' test "$(git -C "$work/origin.git" rev-parse main)" = "$(origin_commit main)"
+expect_failure 'sync: conflict again' 'the live changes conflict with main' --yes
+git -C "$dev" merge --quiet -X theirs -m 'merge live changes' refs/deploy/live > /dev/null
+git -C "$dev" push --quiet origin main
+expect_success 'sync: after manual merge' --yes
+check 'sync: after manual merge: commit' test "$(server_head)" = "$(origin_commit main)"
+
+# The push fails once: the commit stays on the server and the next deployment syncs it
+printf '#!/bin/sh\nrm "$0"\nexit 1\n' > "$work/origin.git/hooks/pre-receive"
+chmod +x "$work/origin.git/hooks/pre-receive"
+echo 'pushed later' >> "$server/content/page/page.txt"
+expect_failure 'sync: push fails' 'pushing to origin failed' --yes
+check 'sync: push fails: nothing deployed' test "$(git -C "$server" rev-parse HEAD^)" = "$(origin_commit main)"
+expect_success 'sync: retry after failed push' --yes
+check 'sync: retry: shown' grep -qF 'The live commit is not on origin' "$work/out"
+check 'sync: retry: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
 
 if [[ $failures != 0 ]]; then
   echo "$failures test(s) failed"

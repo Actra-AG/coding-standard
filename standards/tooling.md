@@ -172,8 +172,9 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
 ```
 
 - **Steps:** locally, `deploy` fetches origin, resolves the ref (only commits on origin, never unpushed ones), reads the
-  live commit on the server, shows both with the commits in between and asks for confirmation. Then, in one SSH call
-  on the server, it stops if the working tree has local changes, runs `git fetch --tags`, checks out the commit (the
+  live commit on the server, shows both with the commits in between and asks for confirmation. With `syncPaths`, live
+  changes are synced into Git first (see below). Then, in one SSH call on the server, it stops if the working tree has
+  local changes, runs `git fetch --tags`, checks out the commit (the
   `defaultRef` branch, without a ref or named explicitly, with a fast-forward, so the checkout stays on `main`; other
   branches, tags and commits detached), runs `composer install --no-dev --optimize-autoloader --no-interaction`,
   deletes the `clearDirectories`, runs the `after` commands and appends a line to `deploy.log`. At the end it prints
@@ -191,22 +192,35 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   | `path`             | Absolute path of the project root on the server (the Git checkout)                               |
   | `defaultRef`       | A branch, by default `main`, or `latest-tag` (highest `vMAJOR.MINOR.PATCH` tag, no pre-releases) |
   | `clearDirectories` | Globs relative to the project root, deleted after `composer install` (`["app/cache/v[0-9]*/"]`)  |
+  | `syncPaths`        | Optional globs of files that are edited on the server (`["content/"]`), synced into Git          |
   | `after`            | Optional shell commands, run in the project root at the end                                      |
 
   `clearDirectories` never leave the project root: no absolute paths, no `.`, `..` or `.git` segments, no empty
   globs, the first directory named without wildcards; matches outside the root (symbolic links) stop the deployment.
   In yuf projects use `app/cache/v[0-9]*/` (compiled templates, `v` + format version), never `app/cache/v*/`: that also
   matches `app/cache/values/`, yuf's `FileCache`.
+- **Live changes (`syncPaths`):** for files that customers edit on the server (CMS content, e.g. Kirby's `content/`).
+  `syncPaths` follow the rules of `clearDirectories` and need a branch as `defaultRef`. If the server's working tree
+  has changes (also new or deleted files) only inside `syncPaths`, `deploy` lists them before the confirmation, then
+  commits them on the server (`content: sync live changes from the server`, author: the developer), fetches that
+  commit over SSH (the server needs no write access to origin), merges it into the `defaultRef` branch without
+  touching the local working tree, pushes it to origin and deploys the result. Changes outside `syncPaths` stop the
+  deployment as before. Live changes can only be deployed with the `defaultRef` branch; other refs are refused until
+  it has been deployed. On a merge conflict nothing is deployed: the commit stays on the server and is fetched as
+  `refs/deploy/live`; merge it by hand (`git merge refs/deploy/live`), push and deploy again. A commit left on the
+  server by an interrupted run is synced the same way on the next run. Pull the defaultRef branch afterwards.
 - **SSH:** `host` is an alias of `~/.ssh/config` with `HostName`, `User`, `Port` and `IdentityFile`. Every developer
   who deploys defines the same alias; user, port and key never go into the project.
 - **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash (4.2 or newer, or
-  the `date` command), Git, Composer and PHP on the `PATH` of a login shell. The web server's document root is
+  the `date` command), Git, Composer and PHP on the `PATH` of a login shell (also used by `git upload-pack` for
+  `syncPaths`, so its profile must not print anything). The web server's document root is
   `public/`, so `.git/`, `.env.php`, `deploy.log` and everything else outside `public/` is never reachable from the
-  web. Nobody edits files of the checkout on the server; server-specific files are ignored by Git.
+  web. Nobody edits files of the checkout on the server except the `syncPaths`; server-specific files are ignored by
+  Git.
 - **Log:** `deploy.log` in the project root gets one tab-separated line per deployment: UTC time, `ok` or `failed`,
   ref, live commit, previous commit, Git user of the developer. The project ignores it in `.gitignore` (`/deploy.log`;
   a whitelist `.gitignore` already does); `deploy` refuses to run otherwise.
-- **Local requirements:** bash 3.2 or newer (macOS default), Git, SSH and [jq](https://jqlang.org) (included in macOS
-  15 and newer).
+- **Local requirements:** bash 3.2 or newer (macOS default), Git (2.38 or newer for `syncPaths`), SSH and
+  [jq](https://jqlang.org) (included in macOS 15 and newer).
 - Before deploying, update the Actra dependencies and make `composer check` green (see
   [versioning.md](versioning.md), section 8). AI assistants never deploy on their own.

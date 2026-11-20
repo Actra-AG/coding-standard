@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.5.0 (2026-11-20)
+
+- `vendor/bin/deploy` syncs live changes: files that customers edit on the server (e.g. CMS content) and that are
+  listed in the new optional `deploy.json` key `syncPaths` (`["content/"]`) are committed on the server, merged into
+  the `defaultRef` branch and pushed to origin before deploying, instead of stopping the deployment
+  ([tooling.md](standards/tooling.md), section 8). Requires Git 2.38 or newer locally. No action needed in projects
+  without such edits.
+
 ## v2.4.1 (2026-11-08)
 
 - A shared test helper in `tests/Double/` that provides an environment (database, network) skips with

@@ -2,22 +2,26 @@
 # Actra coding standard: https://github.com/Actra-AG/coding-standard (standards/tooling.md, section 8)
 #
 # Deploys the project to its server over SSH: the server checkout switches to a commit that exists on origin, then
-# runs composer install, clears the configured directories and runs the configured commands. Configuration:
-# deploy.json in the project root. Runs on the developer's machine with bash 3.2 or newer (macOS default), git, ssh
-# and jq; the server needs bash (4.2 or newer, or the date command), git and composer.
+# runs composer install, clears the configured directories and runs the configured commands. Live changes on the
+# server inside syncPaths are committed there, fetched over SSH, merged into the defaultRef branch and pushed to origin
+# first. Configuration: deploy.json in the project root. Runs on the developer's machine with bash 3.2 or newer
+# (macOS default), git 2.38 or newer, ssh and jq; the server needs bash (4.2 or newer, or the date command), git and
+# composer.
 
 set -euo pipefail
 
 readonly config_file='deploy.json'
 readonly log_file='deploy.log'
-readonly config_keys='["after","clearDirectories","defaultRef","host","path"]'
+readonly config_keys='["after","clearDirectories","defaultRef","host","path","syncPaths"]'
+readonly live_ref='refs/deploy/live'
 
 usage() {
   cat <<'USAGE'
 Usage: vendor/bin/deploy [--yes] [<tag|branch|commit>]
 
 Deploys the project to the server configured in deploy.json. Without a ref, the defaultRef of deploy.json is
-deployed. Only commits that exist on origin can be deployed. Roll back by deploying the previous commit.
+deployed. Only commits that exist on origin can be deployed. Roll back by deploying the previous commit. Live changes
+on the server inside syncPaths are committed, merged into the defaultRef branch and pushed to origin first.
 
 Options:
   -y, --yes   Deploy without asking for confirmation
@@ -35,26 +39,26 @@ quote() {
   printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
 }
 
-# Validates a glob of clearDirectories: relative to the project root, never leaving it
-validate_clear_pattern() {
-  local pattern=$1 segment
+# Validates a glob of clearDirectories or syncPaths: relative to the project root, never leaving it
+validate_pattern() {
+  local key=$1 pattern=$2 segment
   local -a segments
   # Character classes ([0-9]) allowed, e.g. app/cache/v[0-9]*/ keeps yuf's FileCache in app/cache/values/
   local allowed='^[]A-Za-z0-9._*?/[-]+$'
   [[ $pattern =~ $allowed ]] \
-    || fail "clearDirectories: \"$pattern\" may only contain letters, digits and . _ - / * ? [ ]"
-  [[ $pattern != /* ]] || fail "clearDirectories: \"$pattern\" must be relative to the project root"
+    || fail "$key: \"$pattern\" may only contain letters, digits and . _ - / * ? [ ]"
+  [[ $pattern != /* ]] || fail "$key: \"$pattern\" must be relative to the project root"
   IFS=/ read -r -a segments <<< "${pattern%/}"
   [[ ${segments[0]} != *[*?[]* ]] \
-    || fail "clearDirectories: the first directory of \"$pattern\" must be named without wildcards"
+    || fail "$key: the first directory of \"$pattern\" must be named without wildcards"
   for segment in "${segments[@]}"; do
     case $segment in
-      '' | . | .. | .git) fail "clearDirectories: \"$pattern\" must not contain empty, ., .. or .git segments" ;;
+      '' | . | .. | .git) fail "$key: \"$pattern\" must not contain empty, ., .. or .git segments" ;;
     esac
   done
 }
 
-# Reads and validates deploy.json; sets host, path, default_ref, clear_patterns and after_commands
+# Reads and validates deploy.json; sets host, path, default_ref, clear_patterns, sync_patterns and after_commands
 read_config() {
   local errors line
   [[ -f $config_file ]] || fail "$config_file not found in the project root (template: templates/deploy.json)"
@@ -63,7 +67,7 @@ read_config() {
     | if type != "object" then "the file must contain a JSON object" else
         (keys - $known | .[] | "unknown key \"\(.)\""),
         ("host", "path", "defaultRef" | select(($config[.] | type) != "string") | "\"\(.)\" must be a string"),
-        ("clearDirectories", "after"
+        ("clearDirectories", "syncPaths", "after"
           | . as $key
           | select($config | has($key))
           | select(($config[$key] | type) != "array" or ($config[$key] | map(type) | unique - ["string"] != []))
@@ -79,6 +83,8 @@ read_config() {
   default_ref=$(jq -r '.defaultRef' "$config_file")
   clear_patterns=()
   while IFS= read -r line; do clear_patterns+=("$line"); done < <(jq -r '.clearDirectories[]' "$config_file")
+  sync_patterns=()
+  while IFS= read -r line; do sync_patterns+=("$line"); done < <(jq -r '.syncPaths // [] | .[]' "$config_file")
   after_commands=()
   while IFS= read -r line; do after_commands+=("$line"); done < <(jq -r '.after // [] | .[]' "$config_file")
 
@@ -93,7 +99,10 @@ read_config() {
     fail "defaultRef must be latest-tag or a branch name"
   fi
   local pattern command
-  for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do validate_clear_pattern "$pattern"; done
+  for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do validate_pattern clearDirectories "$pattern"; done
+  for pattern in ${sync_patterns[@]+"${sync_patterns[@]}"}; do validate_pattern syncPaths "$pattern"; done
+  # Live changes are merged into a branch; a tag cannot take them
+  [[ ${#sync_patterns[@]} == 0 || $default_ref != latest-tag ]] || fail "syncPaths needs a branch as defaultRef"
   for command in ${after_commands[@]+"${after_commands[@]}"}; do
     [[ $command =~ [^[:space:]] ]] || fail "after must not contain empty commands"
   done
@@ -193,11 +202,41 @@ show_changes() {
   done
 }
 
+# Fetches the live commit from the server checkout over SSH into refs/deploy/live; the server needs no access to
+# write to origin
+fetch_live() {
+  # Login shell: the same PATH as run_remote; git appends the quoted path, which becomes $0
+  git fetch --quiet --no-tags --upload-pack="bash -lc 'git upload-pack \"\$0\"'" "$host:$path" "+HEAD:$live_ref" \
+    || fail "fetching the live commit from $host failed"
+  [[ $(git rev-parse "$live_ref") == "$1" ]] || fail 'the live commit changed since the check; run deploy again'
+}
+
+# Merges the live commit into the target commit without touching the working tree; prints the merged commit
+merge_live() {
+  local target=$1 live=$2 output status=0
+  if git merge-base --is-ancestor "$live" "$target"; then
+    printf '%s\n' "$target"
+    return
+  fi
+  if git merge-base --is-ancestor "$target" "$live"; then
+    printf '%s\n' "$live"
+    return
+  fi
+  output=$(git merge-tree --write-tree --name-only --no-messages "$target" "$live") || status=$?
+  if [[ $status == 1 ]]; then
+    printf 'Merge conflicts:\n%s\n' "$(sed '1d; s/^/  /' <<< "$output")" >&2
+    fail "the live changes conflict with $default_ref; nothing deployed. They are committed on the server and" \
+      "fetched as $live_ref: pull $default_ref, git merge $live_ref, push and deploy again"
+  fi
+  [[ $status == 0 ]] || fail 'merging the live changes failed (Git 2.38 or newer is required)'
+  git commit-tree -p "$target" -p "$live" -m 'Merge live changes from the server' "$output"
+}
+
 # Runs one of the remote_* functions on the server, every argument quoted
 run_remote() {
   local function_name=$1 script command argument
   shift
-  script="$(declare -f remote_fail remote_inspect remote_write_log remote_deploy)
+  script="$(declare -f remote_fail remote_check_clean remote_inspect remote_sync remote_write_log remote_deploy)
 set -euo pipefail
 $function_name \"\$@\""
   # Login shell: the same PATH (composer, PHP version) as an interactive SSH session
@@ -213,17 +252,47 @@ remote_fail() {
   exit 1
 }
 
-# Prints the live commit and branch; fails if the working tree has local changes
-remote_inspect() {
-  cd -- "$1" || remote_fail "project root $1 not found"
-  [[ $(git rev-parse --show-toplevel) == "$(pwd -P)" ]] || remote_fail "$1 is not the root of a Git checkout"
-  status=$(git status --porcelain)
-  if [[ $status != '' ]]; then
-    printf '%s\n' "$status" >&2
+# Fails if the working tree has local changes outside the sync paths (arguments; none: anywhere)
+remote_check_clean() {
+  if [[ $# == 0 ]]; then
+    status=$(git status --porcelain)
+  else
+    status=$(git status --porcelain --untracked-files=all -- . "${@/#/:(exclude,glob)}")
+  fi
+  [[ $status == '' ]] && return 0
+  printf '%s\n' "$status" >&2
+  if [[ $# == 0 ]]; then
     remote_fail 'the working tree on the server has local changes; clean it up first'
   fi
+  remote_fail 'the working tree on the server has local changes outside syncPaths; clean it up first'
+}
+
+# Arguments: path, sync paths. Prints the live commit, branch and changed files inside the sync paths; fails on other
+# local changes
+remote_inspect() {
+  cd -- "$1" || remote_fail "project root $1 not found"
+  shift
+  [[ $(git rev-parse --show-toplevel) == "$(pwd -P)" ]] || remote_fail "$(pwd) is not the root of a Git checkout"
+  remote_check_clean "$@"
   printf 'deploy-commit=%s\n' "$(git rev-parse HEAD)"
   printf 'deploy-branch=%s\n' "$(git symbolic-ref --short -q HEAD || true)"
+  [[ $# == 0 ]] || git status --porcelain --untracked-files=all -- "${@/#/:(glob)}" | sed 's/^/deploy-sync=/'
+}
+
+# Arguments: path, expected live commit, user name, user email, sync paths. Commits the live changes inside the sync
+# paths and prints the new live commit
+remote_sync() {
+  cd -- "$1" || remote_fail "project root $1 not found"
+  [[ $(git rev-parse HEAD) == "$2" ]] || remote_fail 'the live commit changed since the check; run deploy again'
+  export GIT_AUTHOR_NAME=$3 GIT_COMMITTER_NAME=$3 GIT_AUTHOR_EMAIL=$4 GIT_COMMITTER_EMAIL=$4
+  shift 4
+  remote_check_clean "$@"
+  git add -A -- "${@/#/:(glob)}"
+  # The changes may have been reverted since the check
+  if ! git diff --cached --quiet; then
+    git commit --quiet --no-verify -m 'content: sync live changes from the server'
+  fi
+  printf 'deploy-commit=%s\n' "$(git rev-parse HEAD)"
 }
 
 remote_write_log() {
@@ -352,15 +421,34 @@ origin_refs=$(git ls-remote --heads --tags origin)
 resolve_ref "$ref"
 
 echo "Reading the live commit from $host …"
-live_output=$(run_remote remote_inspect "$path") || fail "checking the server $host failed"
+live_output=$(run_remote remote_inspect "$path" ${sync_patterns[@]+"${sync_patterns[@]}"}) \
+  || fail "checking the server $host failed"
 live_commit=$(sed -n 's/^deploy-commit=//p' <<< "$live_output" | tail -n 1)
 live_branch=$(sed -n 's/^deploy-branch=//p' <<< "$live_output" | tail -n 1)
+live_changes=$(sed -n 's/^deploy-sync=/  /p' <<< "$live_output")
 [[ $live_commit =~ ^[0-9a-f]{40}$ ]] || fail "could not read the live commit on $host"
+
+# Live changes, or a live commit that an interrupted sync left on the server only, go into the defaultRef branch first
+sync=0
+if [[ ${#sync_patterns[@]} != 0 ]] && { [[ $live_changes != '' ]] || ! on_origin "$live_commit"; }; then
+  [[ $target_branch == "$default_ref" ]] \
+    || fail "the server has live changes that are not in Git yet; deploy $default_ref first to sync them"
+  sync=1
+fi
 
 echo
 echo "Server:  $host:$path"
 echo "Live:    $(describe "$live_commit")${live_branch:+ on branch $live_branch}"
 echo "Deploy:  $(describe "$target_commit") ← $ref_label${target_branch:+ (branch, fast-forward)}"
+if [[ $sync == 1 ]]; then
+  if [[ $live_changes != '' ]]; then
+    count=$(wc -l <<< "$live_changes" | tr -d ' ')
+    echo "Live changes, committed on the server and merged into $default_ref first ($count):"
+    printf '%s\n' "$live_changes"
+  else
+    echo "The live commit is not on origin: it is merged into $default_ref first."
+  fi
+fi
 show_changes "$live_commit" "$target_commit"
 echo
 
@@ -373,9 +461,31 @@ if [[ $assume_yes != 1 ]]; then
   esac
 fi
 
-user=$(git config user.name || true)
-email=$(git config user.email || true)
-user=$(printf '%s%s' "${user:-${USER:-unknown}}" "${email:+ <$email>}" | tr -d '[:cntrl:]')
+user_name=$(git config user.name || true)
+user_email=$(git config user.email || true)
+user_name=$(printf '%s' "${user_name:-${USER:-unknown}}" | tr -d '[:cntrl:]')
+user_email=$(printf '%s' "$user_email" | tr -d '[:cntrl:]')
+user="$user_name${user_email:+ <$user_email>}"
+
+if [[ $sync == 1 ]]; then
+  if [[ $live_changes != '' ]]; then
+    echo "Committing the live changes on $host …"
+    sync_output=$(run_remote remote_sync "$path" "$live_commit" "$user_name" "${user_email:-unknown}" \
+      "${sync_patterns[@]}") || fail "committing the live changes on $host failed; nothing deployed"
+    live_commit=$(sed -n 's/^deploy-commit=//p' <<< "$sync_output" | tail -n 1)
+    [[ $live_commit =~ ^[0-9a-f]{40}$ ]] || fail "could not read the live commit on $host"
+  fi
+  echo "Fetching the live commit from $host …"
+  fetch_live "$live_commit"
+  merged_commit=$(merge_live "$target_commit" "$live_commit")
+  if [[ $merged_commit != "$target_commit" ]]; then
+    echo "Pushing the live changes to $default_ref on origin …"
+    git push --quiet origin "$merged_commit:refs/heads/$default_ref" \
+      || fail "pushing to origin failed; nothing deployed, deploy again (the live changes are committed on $host)"
+    target_commit=$merged_commit
+  fi
+  git update-ref -d "$live_ref"
+fi
 
 run_remote remote_deploy "$path" "$live_commit" "$target_commit" "$target_branch" "$ref_label" "$user" \
   "${#clear_patterns[@]}" ${clear_patterns[@]+"${clear_patterns[@]}"} ${after_commands[@]+"${after_commands[@]}"} \
