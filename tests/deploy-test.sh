@@ -30,6 +30,10 @@ done
 printf '%s\n' "$1" >> "$FAKE_SSH_LOG"
 shift
 command="$*"
+# Changes the server between the check and committing the live changes
+if [[ ${FAKE_BEFORE_SYNC:-} != '' && $command == *remote_sync* ]]; then
+  eval "$FAKE_BEFORE_SYNC"
+fi
 # Chroot shells without date (e.g. Plesk)
 if [[ ${FAKE_NO_DATE:-} == 1 ]]; then
   date() {
@@ -294,27 +298,53 @@ echo 'new' > "$server/content/new/new.txt"
 rm "$server/content/old.txt"
 echo 'html' > "$server/site/view.html"
 live_before=$(server_head)
-expect_success 'sync: live changes' --yes
+dev_before=$(origin_commit main)
+expect_success 'sync: diverged' --yes
 check 'sync: files shown' grep -qF '?? content/new/new.txt' "$work/out"
 check 'sync: deployed commit on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
-check 'sync: merge commit' test "$(git -C "$server" rev-list --count --merges "$live_before..HEAD")" = 1
+check 'sync: diverged: no merge commit' test "$(git -C "$work/origin.git" rev-list --count --merges main)" = 0
+check 'sync: diverged: one commit on top' test "$(git -C "$server" rev-parse HEAD^)" = "$dev_before"
+check 'sync: diverged: message' test "$(git -C "$server" log -1 --format=%s)" \
+  = 'content: sync live changes from the server'
+synced_live=$(git -C "$server" log -1 --format=%B | sed -n 's/^(cherry picked from commit \([0-9a-f]*\))$/\1/p')
+check 'sync: diverged: live commit recorded' test "$(git -C "$server" rev-parse "$synced_live^")" = "$live_before"
+check 'sync: diverged: server branch moved' grep -qF 'git checkout main && git reset --keep' "$work/out"
+check 'sync: diverged: rollback by revert' grep -qF 'Roll back by reverting the unwanted commits on main' \
+  "$work/out"
 check 'sync: new version deployed' grep -qx 'version' "$server/version.txt"
 check 'sync: server clean' test "$(git -C "$server" status --porcelain)" = ''
 check 'sync: edits in Git' test "$(git -C "$work/origin.git" show main:content/new/new.txt)" = new
 check 'sync: glob' test "$(git -C "$work/origin.git" show main:site/view.html)" = html
 check 'sync: deletion in Git' eval '! git -C "$work/origin.git" cat-file -e main:content/old.txt 2> /dev/null'
-check 'sync: author' test "$(git -C "$server" log -1 --format='%an <%ae>' HEAD^2)" \
+check 'sync: author' test "$(git -C "$server" log -1 --format='%an <%ae>' HEAD)" \
   = 'Test Developer <developer@example.com>'
 check 'sync: on branch' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
 check 'sync: temporary ref removed' eval '! git -C "$dev" rev-parse -q --verify refs/deploy/live > /dev/null'
 git -C "$dev" pull --quiet --ff-only
 
 echo 'edited again' >> "$server/content/page/page.txt"
-expect_success 'sync: fast-forward' --yes
-check 'sync: fast-forward: no merge commit' test "$(git -C "$server" log -1 --format=%s)" \
+live_before=$(server_head)
+expect_success 'sync: target is an ancestor' --yes
+check 'sync: target is an ancestor: live commit pushed' test "$(git -C "$server" rev-parse HEAD^)" = "$live_before"
+check 'sync: target is an ancestor: message' test "$(git -C "$server" log -1 --format=%s)" \
   = 'content: sync live changes from the server'
-check 'sync: fast-forward: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
+check 'sync: target is an ancestor: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
+check 'sync: target is an ancestor: fast-forward' grep -qF 'git merge --ff-only' "$work/out"
+check 'sync: target is an ancestor: rollback hint' grep -qF "Roll back with: vendor/bin/deploy $live_before" \
+  "$work/out"
 git -C "$dev" pull --quiet --ff-only
+
+# The live changes are reverted after the check: the live commit stays an ancestor of the target
+echo 'version 2' > "$dev/version.txt"
+git -C "$dev" commit --quiet -am 'version 2'
+git -C "$dev" push --quiet origin main
+echo 'reverted' >> "$server/content/page/page.txt"
+export FAKE_BEFORE_SYNC="git -C '$server' checkout --quiet -- content/page/page.txt"
+expect_success 'sync: live is an ancestor' --yes
+unset FAKE_BEFORE_SYNC
+check 'sync: live is an ancestor: target deployed' test "$(server_head)" = "$(origin_commit main)"
+check 'sync: live is an ancestor: nothing pushed' eval '! grep -q "Pushing the live changes" "$work/out"'
+check 'sync: live is an ancestor: fast-forward' grep -qF 'git merge --ff-only' "$work/out"
 
 echo 'changed' >> "$server/site/template.php"
 expect_failure 'sync: changes outside syncPaths' 'local changes outside syncPaths' --yes
@@ -332,11 +362,19 @@ expect_failure 'sync: conflict' 'the live changes conflict with main; nothing de
 check 'sync: conflict: file shown' grep -qF '  content/page/page.txt' "$work/out"
 check 'sync: conflict: committed on the server' test "$(git -C "$server" rev-parse HEAD^)" = "$live_before"
 check 'sync: conflict: origin unchanged' test "$(git -C "$work/origin.git" rev-parse main)" = "$(origin_commit main)"
+check 'sync: conflict: cherry-pick hint' grep -qF 'git cherry-pick -x ..refs/deploy/live' "$work/out"
 expect_failure 'sync: conflict again' 'the live changes conflict with main' --yes
-git -C "$dev" merge --quiet -X theirs -m 'merge live changes' refs/deploy/live > /dev/null
+# Resolved with both lines: the next run must not combine the live changes again
+git -C "$dev" cherry-pick -x ..refs/deploy/live > /dev/null 2>&1 && fail_test 'sync: conflict: no conflict locally'
+printf 'page\nedited\nedited again\nedited\ndeveloper\n' > "$dev/content/page/page.txt"
+git -C "$dev" add content/page/page.txt
+GIT_EDITOR=true git -C "$dev" cherry-pick --continue > /dev/null
 git -C "$dev" push --quiet origin main
-expect_success 'sync: after manual merge' --yes
-check 'sync: after manual merge: commit' test "$(server_head)" = "$(origin_commit main)"
+expect_success 'sync: after cherry-pick' --yes
+check 'sync: after cherry-pick: commit' test "$(server_head)" = "$(origin_commit main)"
+check 'sync: after cherry-pick: nothing pushed' eval '! grep -q "Pushing the live changes" "$work/out"'
+check 'sync: after cherry-pick: server branch moved' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
+check 'sync: after cherry-pick: linear' test "$(git -C "$work/origin.git" rev-list --count --merges main)" = 0
 
 # The push fails once: the commit stays on the server and the next deployment syncs it
 printf '#!/bin/sh\nrm "$0"\nexit 1\n' > "$work/origin.git/hooks/pre-receive"

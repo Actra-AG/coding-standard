@@ -203,12 +203,15 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   `syncPaths` follow the rules of `clearDirectories` and need a branch as `defaultRef`. If the server's working tree
   has changes (also new or deleted files) only inside `syncPaths`, `deploy` lists them before the confirmation, then
   commits them on the server (`content: sync live changes from the server`, author: the developer), fetches that
-  commit over SSH (the server needs no write access to origin), merges it into the `defaultRef` branch without
-  touching the local working tree, pushes it to origin and deploys the result. Changes outside `syncPaths` stop the
-  deployment as before. Live changes can only be deployed with the `defaultRef` branch; other refs are refused until
-  it has been deployed. On a merge conflict nothing is deployed: the commit stays on the server and is fetched as
-  `refs/deploy/live`; merge it by hand (`git merge refs/deploy/live`), push and deploy again. A commit left on the
-  server by an interrupted run is synced the same way on the next run. Pull the defaultRef branch afterwards.
+  commit over SSH (the server needs no write access to origin), adds it on top of the `defaultRef` branch without
+  touching the local working tree (a fast-forward, or one new commit with the same message and author, marked like
+  `git cherry-pick -x`; never a merge commit), pushes it to origin and deploys the result. Changes outside `syncPaths`
+  stop the deployment as before. Live changes can only be deployed with the `defaultRef` branch; other refs are
+  refused until it has been deployed. On a conflict nothing is deployed: the commit stays on the server and is
+  fetched as `refs/deploy/live`; pull, pick it by hand (`git cherry-pick -x ..refs/deploy/live`), resolve, push and
+  deploy again. A commit left on the server by an interrupted run is synced the same way on the next run. After a new
+  commit on top, the old live commit is not on origin: roll back by reverting the unwanted commits instead. Pull the
+  defaultRef branch afterwards.
 - **SSH:** `host` is an alias of `~/.ssh/config` with `HostName`, `User`, `Port` and `IdentityFile`. Every developer
   who deploys defines the same alias; user, port and key never go into the project.
 - **Server:** a Git checkout of the project with read access to origin (e.g. a deploy key), bash (4.2 or newer, or

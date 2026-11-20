@@ -3,10 +3,10 @@
 #
 # Deploys the project to its server over SSH: the server checkout switches to a commit that exists on origin, then
 # runs composer install, clears the configured directories and runs the configured commands. Live changes on the
-# server inside syncPaths are committed there, fetched over SSH, merged into the defaultRef branch and pushed to origin
-# first. Configuration: deploy.json in the project root. Runs on the developer's machine with bash 3.2 or newer
-# (macOS default), git 2.38 or newer, ssh and jq; the server needs bash (4.2 or newer, or the date command), git and
-# composer.
+# server inside syncPaths are committed there, fetched over SSH, added as one commit on top of the defaultRef branch
+# (linear history, no merge commit) and pushed to origin first. Configuration: deploy.json in the project root. Runs
+# on the developer's machine with bash 3.2 or newer (macOS default), git 2.38 or newer, ssh and jq; the server needs
+# bash (4.2 or newer, or the date command), git and composer.
 
 set -euo pipefail
 
@@ -21,7 +21,8 @@ Usage: vendor/bin/deploy [--yes] [<tag|branch|commit>]
 
 Deploys the project to the server configured in deploy.json. Without a ref, the defaultRef of deploy.json is
 deployed. Only commits that exist on origin can be deployed. Roll back by deploying the previous commit. Live changes
-on the server inside syncPaths are committed, merged into the defaultRef branch and pushed to origin first.
+on the server inside syncPaths are committed, added as one commit on top of the defaultRef branch and pushed to origin
+first.
 
 Options:
   -y, --yes   Deploy without asking for confirmation
@@ -101,7 +102,7 @@ read_config() {
   local pattern command
   for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do validate_pattern clearDirectories "$pattern"; done
   for pattern in ${sync_patterns[@]+"${sync_patterns[@]}"}; do validate_pattern syncPaths "$pattern"; done
-  # Live changes are merged into a branch; a tag cannot take them
+  # Live changes are committed on top of a branch; a tag cannot take them
   [[ ${#sync_patterns[@]} == 0 || $default_ref != latest-tag ]] || fail "syncPaths needs a branch as defaultRef"
   for command in ${after_commands[@]+"${after_commands[@]}"}; do
     [[ $command =~ [^[:space:]] ]] || fail "after must not contain empty commands"
@@ -211,10 +212,22 @@ fetch_live() {
   [[ $(git rev-parse "$live_ref") == "$1" ]] || fail 'the live commit changed since the check; run deploy again'
 }
 
-# Merges the live commit into the target commit without touching the working tree; prints the merged commit
-merge_live() {
-  local target=$1 live=$2 output status=0
-  if git merge-base --is-ancestor "$live" "$target"; then
+# Succeeds if every live commit missing in the target was picked into it with git cherry-pick -x (by hand after a
+# conflict, or by an earlier run whose deployment failed after the push)
+live_picked() {
+  local target=$1 live=$2 picked commit
+  picked=$(git log --format=%B "$target" --not "$live" \
+    | sed -n 's/^(cherry picked from commit \([0-9a-f]\{40\}\))$/\1/p')
+  while IFS= read -r commit; do
+    grep -qxF -- "$commit" <<< "$picked" || return 1
+  done < <(git rev-list "$target..$live")
+}
+
+# Adds the live changes on top of the target commit without touching the working tree, as a fast-forward or one new
+# commit with the live commit's message and author (never a merge commit); prints the resulting commit
+add_live() {
+  local target=$1 live=$2 output status=0 message commit
+  if git merge-base --is-ancestor "$live" "$target" || live_picked "$target" "$live"; then
     printf '%s\n' "$target"
     return
   fi
@@ -224,12 +237,19 @@ merge_live() {
   fi
   output=$(git merge-tree --write-tree --name-only --no-messages "$target" "$live") || status=$?
   if [[ $status == 1 ]]; then
-    printf 'Merge conflicts:\n%s\n' "$(sed '1d; s/^/  /' <<< "$output")" >&2
+    printf 'Conflicts:\n%s\n' "$(sed '1d; s/^/  /' <<< "$output")" >&2
     fail "the live changes conflict with $default_ref; nothing deployed. They are committed on the server and" \
-      "fetched as $live_ref: pull $default_ref, git merge $live_ref, push and deploy again"
+      "fetched as $live_ref: pull $default_ref, git cherry-pick -x ..$live_ref, resolve, push and deploy again"
   fi
-  [[ $status == 0 ]] || fail 'merging the live changes failed (Git 2.38 or newer is required)'
-  git commit-tree -p "$target" -p "$live" -m 'Merge live changes from the server' "$output"
+  [[ $status == 0 ]] || fail 'combining the live changes failed (Git 2.38 or newer is required)'
+  # Records the live commits like git cherry-pick -x, so a later run recognises them as synced
+  message=$(git show -s --format=%B "$live")$'\n'
+  while IFS= read -r commit; do
+    message+=$'\n'"(cherry picked from commit $commit)"
+  done < <(git rev-list --reverse "$target..$live")
+  GIT_AUTHOR_NAME=$(git show -s --format=%an "$live") GIT_AUTHOR_EMAIL=$(git show -s --format=%ae "$live") \
+    GIT_AUTHOR_DATE=$(git show -s --format=%ad --date=raw "$live") \
+    git commit-tree -p "$target" -F - "$output" <<< "$message"$'\n'
 }
 
 # Runs one of the remote_* functions on the server, every argument quoted
@@ -304,19 +324,20 @@ remote_write_log() {
     "$(git -C "$deploy_root" rev-parse HEAD)" "$deploy_previous" "$deploy_user" >> "$deploy_root/deploy.log"
 }
 
-# Arguments: path, expected live commit, target commit, branch (empty: detached), ref, user, number of clear
-# patterns, clear patterns, after commands
+# Arguments: path, expected live commit, target commit, branch (empty: detached), synced live commit (empty: none), ref,
+# user, number of clear patterns, clear patterns, after commands
 remote_deploy() {
   cd -- "$1" || remote_fail "project root $1 not found"
   deploy_root=$(pwd -P)
   deploy_previous=$2
   deploy_target=$3
   deploy_branch=$4
-  deploy_ref=$5
-  deploy_user=$6
+  deploy_synced=$5
+  deploy_ref=$6
+  deploy_user=$7
   deploy_clear=()
-  deploy_count=$7
-  shift 7
+  deploy_count=$8
+  shift 8
   while [[ $deploy_count -gt 0 ]]; do
     deploy_clear+=("$1")
     shift
@@ -331,6 +352,8 @@ remote_deploy() {
   [[ $(git rev-parse HEAD) == "$deploy_previous" ]] \
     || remote_fail 'the live commit changed since the check; run deploy again'
   [[ $(git status --porcelain) == '' ]] || remote_fail 'the working tree on the server has local changes'
+  [[ $deploy_synced == '' || $deploy_synced == "$deploy_previous" ]] \
+    || remote_fail 'the synced commit is not the live commit'
 
   echo '> git fetch --tags --force origin'
   git fetch --tags --force origin
@@ -339,7 +362,14 @@ remote_deploy() {
 
   trap remote_write_log EXIT
   deploy_switched=1
-  if [[ $deploy_branch != '' ]]; then
+  if [[ $deploy_branch != '' && $deploy_synced != '' \
+    && $(git rev-parse -q --verify "refs/heads/$deploy_branch" || true) == "$deploy_synced" ]]; then
+    # The live commit was synced as a new commit on top of the branch on origin, so the branch cannot fast-forward.
+    # Safe only here: the working tree is clean and the branch is exactly the live commit that was just synced
+    echo "> git checkout $deploy_branch && git reset --keep $deploy_target"
+    git checkout --quiet "$deploy_branch" --
+    git reset --quiet --keep "$deploy_target"
+  elif [[ $deploy_branch != '' ]]; then
     echo "> git checkout $deploy_branch && git merge --ff-only $deploy_target"
     git checkout --quiet "$deploy_branch" --
     git merge --quiet --ff-only "$deploy_target"
@@ -443,10 +473,10 @@ echo "Deploy:  $(describe "$target_commit") ← $ref_label${target_branch:+ (bra
 if [[ $sync == 1 ]]; then
   if [[ $live_changes != '' ]]; then
     count=$(wc -l <<< "$live_changes" | tr -d ' ')
-    echo "Live changes, committed on the server and merged into $default_ref first ($count):"
+    echo "Live changes, committed on the server and added on top of $default_ref first ($count):"
     printf '%s\n' "$live_changes"
   else
-    echo "The live commit is not on origin: it is merged into $default_ref first."
+    echo "The live commit is not on origin: it is added on top of $default_ref first."
   fi
 fi
 show_changes "$live_commit" "$target_commit"
@@ -467,6 +497,9 @@ user_name=$(printf '%s' "${user_name:-${USER:-unknown}}" | tr -d '[:cntrl:]')
 user_email=$(printf '%s' "$user_email" | tr -d '[:cntrl:]')
 user="$user_name${user_email:+ <$user_email>}"
 
+synced_commit=''
+previous_commit=$live_commit
+rollback="with: vendor/bin/deploy $previous_commit"
 if [[ $sync == 1 ]]; then
   if [[ $live_changes != '' ]]; then
     echo "Committing the live changes on $host …"
@@ -477,21 +510,28 @@ if [[ $sync == 1 ]]; then
   fi
   echo "Fetching the live commit from $host …"
   fetch_live "$live_commit"
-  merged_commit=$(merge_live "$target_commit" "$live_commit")
-  if [[ $merged_commit != "$target_commit" ]]; then
+  synced_target=$(add_live "$target_commit" "$live_commit")
+  if [[ $synced_target != "$target_commit" ]]; then
     echo "Pushing the live changes to $default_ref on origin …"
-    git push --quiet origin "$merged_commit:refs/heads/$default_ref" \
+    git push --quiet origin "$synced_target:refs/heads/$default_ref" \
       || fail "pushing to origin failed; nothing deployed, deploy again (the live changes are committed on $host)"
-    target_commit=$merged_commit
+    target_commit=$synced_target
+  fi
+  # The live commit is no ancestor of a commit created on top of the branch: the server branch moves to it
+  if ! git merge-base --is-ancestor "$live_commit" "$target_commit"; then
+    synced_commit=$live_commit
+    # The live commit is not on origin and cannot be deployed again; the live changes stay on the branch
+    rollback="by reverting the unwanted commits on $default_ref (keep the live changes), push and deploy again"
   fi
   git update-ref -d "$live_ref"
 fi
 
-run_remote remote_deploy "$path" "$live_commit" "$target_commit" "$target_branch" "$ref_label" "$user" \
-  "${#clear_patterns[@]}" ${clear_patterns[@]+"${clear_patterns[@]}"} ${after_commands[@]+"${after_commands[@]}"} \
-  || fail "deployment failed; the server log is $path/$log_file, roll back with: vendor/bin/deploy $live_commit"
+run_remote remote_deploy "$path" "$live_commit" "$target_commit" "$target_branch" "$synced_commit" "$ref_label" \
+  "$user" "${#clear_patterns[@]}" ${clear_patterns[@]+"${clear_patterns[@]}"} \
+  ${after_commands[@]+"${after_commands[@]}"} \
+  || fail "deployment failed; the server log is $path/$log_file, roll back $rollback"
 
 echo
 echo "Live:     $(describe "$target_commit") ← $ref_label"
-echo "Previous: $(describe "$live_commit")"
-echo "Roll back with: vendor/bin/deploy $live_commit"
+echo "Previous: $(describe "$previous_commit")"
+echo "Roll back $rollback"

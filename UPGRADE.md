@@ -3,6 +3,13 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.5.1 (2026-11-20)
+
+- `vendor/bin/deploy` syncs live changes as a single commit on top of the `defaultRef` branch instead of a merge
+  commit, so the history stays linear. On a conflict, pick the live changes with
+  `git cherry-pick -x ..refs/deploy/live` instead of merging them ([tooling.md](standards/tooling.md), section 8).
+  Merge commits created by v2.5.0 stay in the history. No action needed in projects.
+
 ## v2.5.0 (2026-11-20)
 
 - `vendor/bin/deploy` syncs live changes: files that customers edit on the server (e.g. CMS content) and that are
