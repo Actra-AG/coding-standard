@@ -167,7 +167,7 @@ keys. No manual `git pull` on the server, no CI/CD pipeline.
 
 ```bash
 vendor/bin/deploy          # the defaultRef of deploy.json
-vendor/bin/deploy v1.7.0   # a tag, branch or commit on origin (e.g. the previous commit for a rollback)
+vendor/bin/deploy v1.7.0   # a tag, branch or commit on origin (emergencies only, see below)
 vendor/bin/deploy --yes    # without confirmation, for scripts
 ```
 
@@ -178,11 +178,16 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   `defaultRef` branch, without a ref or named explicitly, with a fast-forward, so the checkout stays on `main`; other
   branches, tags and commits detached), runs `composer install --no-dev --optimize-autoloader --no-interaction`,
   deletes the `clearDirectories`, runs the `after` commands and appends a line to `deploy.log`. At the end it prints
-  the live and the previous commit; a rollback is `vendor/bin/deploy <previous commit>`.
+  the live and the previous commit and how to roll back.
 - **`main` is production:** by default `deploy` deploys `main` (`"defaultRef": "main"`), so `main` is always what runs
   in production and a forgotten tag never holds a release back. Only what may go live is merged to `main`; unfinished
   work and templates before the frontend review stay on a branch. Projects that deploy only released versions set
   `latest-tag`.
+- **Rollback:** revert the unwanted commits on the `defaultRef` branch (`git revert --no-edit <previous>..<live>`, one
+  commit: `git revert <commit>`), push and run `vendor/bin/deploy` (with `latest-tag`: revert on the release branch,
+  tag a new release, deploy). `deploy` prints the revert command after every deployment. Deploying another tag, branch
+  or commit stays possible for emergencies, but it leaves the server checkout detached until the next deployment of
+  the `defaultRef`; do not leave production there.
 - **Configuration:** `deploy.json` in the project root, committed (see [template](../templates/deploy.json)). Unknown
   keys and invalid values stop the deployment.
 

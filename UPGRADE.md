@@ -3,6 +3,12 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.5.2 (2026-11-21)
+
+- `vendor/bin/deploy` suggests rolling back with `git revert` on the `defaultRef` branch, push and a normal deployment,
+  instead of deploying the previous commit, which left the server checkout detached
+  ([tooling.md](standards/tooling.md), section 8). No action needed in projects.
+
 ## v2.5.1 (2026-11-20)
 
 - `vendor/bin/deploy` syncs live changes as a single commit on top of the `defaultRef` branch instead of a merge

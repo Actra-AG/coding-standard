@@ -20,8 +20,9 @@ usage() {
 Usage: vendor/bin/deploy [--yes] [<tag|branch|commit>]
 
 Deploys the project to the server configured in deploy.json. Without a ref, the defaultRef of deploy.json is
-deployed. Only commits that exist on origin can be deployed. Roll back by deploying the previous commit. Live changes
-on the server inside syncPaths are committed, added as one commit on top of the defaultRef branch and pushed to origin
+deployed. Only commits that exist on origin can be deployed. Roll back with git revert on the defaultRef branch, push
+and deploy again; other refs leave the checkout detached until the next deployment of the defaultRef. Live changes on
+the server inside syncPaths are committed, added as one commit on top of the defaultRef branch and pushed to origin
 first.
 
 Options:
@@ -172,6 +173,32 @@ resolve_ref() {
     [[ $ref =~ ^[0-9a-f]{7,40}$ ]] || fail "$ref is no tag or branch on origin and no commit hash"
     target_commit=$(git rev-parse --verify --quiet "$ref^{commit}") || fail "unknown or ambiguous commit: $ref"
     on_origin "$target_commit" || fail "commit $ref is not on origin; push it first"
+  fi
+}
+
+# Prints how to roll back from the live to the target commit: production stays on the defaultRef branch, so a
+# rollback is a revert there and a normal deployment. Nothing when the target is already live.
+rollback_hint() {
+  local live=$1 target=$2 branch=$default_ref default=$default_ref release='' keep='' range
+  if [[ $default_ref == latest-tag ]]; then
+    branch='the release branch'
+    default='the latest tag'
+    release=', tag a new release'
+  fi
+  # Another ref than the defaultRef was deployed (detached checkout): deploy the defaultRef again
+  if [[ $ref != '' && $target_branch == '' ]]; then
+    printf 'vendor/bin/deploy (deploys %s; the checkout stays detached until then)' "$default"
+    return
+  fi
+  [[ $live != "$target" ]] || return 0
+  if git cat-file -e "$live^{commit}" 2> /dev/null && git merge-base --is-ancestor "$live" "$target"; then
+    range="$(git rev-parse --short "$live")..$(git rev-parse --short "$target")"
+    printf 'git revert --no-edit %s on %s (one commit: git revert <commit>), push%s and run vendor/bin/deploy' \
+      "$range" "$branch" "$release"
+  else
+    # The live commit is unknown or no ancestor (e.g. live changes added on top): revert by hand
+    [[ $synced_commit == '' ]] || keep=' (keep the live changes)'
+    printf 'revert the unwanted commits on %s%s, push%s and run vendor/bin/deploy' "$branch" "$keep" "$release"
   fi
 }
 
@@ -499,7 +526,6 @@ user="$user_name${user_email:+ <$user_email>}"
 
 synced_commit=''
 previous_commit=$live_commit
-rollback="with: vendor/bin/deploy $previous_commit"
 if [[ $sync == 1 ]]; then
   if [[ $live_changes != '' ]]; then
     echo "Committing the live changes on $host …"
@@ -520,18 +546,17 @@ if [[ $sync == 1 ]]; then
   # The live commit is no ancestor of a commit created on top of the branch: the server branch moves to it
   if ! git merge-base --is-ancestor "$live_commit" "$target_commit"; then
     synced_commit=$live_commit
-    # The live commit is not on origin and cannot be deployed again; the live changes stay on the branch
-    rollback="by reverting the unwanted commits on $default_ref (keep the live changes), push and deploy again"
   fi
   git update-ref -d "$live_ref"
 fi
 
+rollback=$(rollback_hint "$live_commit" "$target_commit")
 run_remote remote_deploy "$path" "$live_commit" "$target_commit" "$target_branch" "$synced_commit" "$ref_label" \
   "$user" "${#clear_patterns[@]}" ${clear_patterns[@]+"${clear_patterns[@]}"} \
   ${after_commands[@]+"${after_commands[@]}"} \
-  || fail "deployment failed; the server log is $path/$log_file, roll back $rollback"
+  || fail "deployment failed; the server log is $path/$log_file${rollback:+, roll back: $rollback}"
 
 echo
 echo "Live:     $(describe "$target_commit") ← $ref_label"
 echo "Previous: $(describe "$previous_commit")"
-echo "Roll back $rollback"
+[[ $rollback == '' ]] || echo "Roll back: $rollback"

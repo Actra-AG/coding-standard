@@ -199,11 +199,15 @@ check 'after command' test -f "$server/after-ran"
 log_line=$'\tok\tv1.10.0\t'"$(origin_commit v1.10.0)"$'\t'"$(origin_commit main)"$'\tTest Developer <developer@example.com>$'
 check 'log line' grep -q "$log_line" "$server/deploy.log"
 check 'log line: UTC time' grep -qE "^$time_pattern"$'\tok\tv1.10.0\t' "$server/deploy.log"
-check 'rollback hint' grep -qF "Roll back with: vendor/bin/deploy $(origin_commit main)" "$work/out"
+check 'latest tag: rollback hint' grep -qF \
+  'Roll back: revert the unwanted commits on the release branch, push, tag a new release and run vendor/bin/deploy' \
+  "$work/out"
 
 expect_success 'tag as rollback' --yes v1.2.0
 check 'tag as rollback: commit' test "$(server_head)" = "$(origin_commit v1.2.0)"
 check 'tag as rollback: removed commits shown' grep -qF 'Removed commits (1):' "$work/out"
+check 'tag as rollback: hint' grep -qF \
+  'Roll back: vendor/bin/deploy (deploys the latest tag; the checkout stays detached until then)' "$work/out"
 
 expect_success 'commit hash' --yes "$(origin_commit v1.0.0)"
 check 'commit hash: commit' test "$(server_head)" = "$(origin_commit v1.0.0)"
@@ -234,7 +238,11 @@ check 'local changes on the server: unchanged' test "$(server_head)" = "$(origin
 git -C "$server" checkout --quiet -- composer.json
 
 write_config main
+live_before=$(server_head)
 expect_success 'default branch' --yes
+check 'default branch: rollback hint' grep -qF "Roll back: git revert --no-edit \
+$(git -C "$dev" rev-parse --short "$live_before")..$(git -C "$dev" rev-parse --short origin/main) on main \
+(one commit: git revert <commit>), push and run vendor/bin/deploy" "$work/out"
 check 'default branch: commit' test "$(server_head)" = "$(origin_commit origin/main)"
 check 'default branch: on branch' test "$(git -C "$server" symbolic-ref --short HEAD)" = main
 
@@ -248,6 +256,8 @@ git -C "$dev" push --quiet origin "$(origin_commit v1.2.0):refs/heads/feature"
 expect_success 'other branch' --yes feature
 check 'other branch: commit' test "$(server_head)" = "$(origin_commit v1.2.0)"
 check 'other branch: detached' test "$(git -C "$server" symbolic-ref -q HEAD || echo detached)" = detached
+check 'other branch: rollback hint' grep -qF \
+  'Roll back: vendor/bin/deploy (deploys main; the checkout stays detached until then)' "$work/out"
 
 # The printf builtin of bash 4.2+ writes the time without date
 if bash -c '(( BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 402 ))'; then
@@ -310,7 +320,7 @@ check 'sync: diverged: message' test "$(git -C "$server" log -1 --format=%s)" \
 synced_live=$(git -C "$server" log -1 --format=%B | sed -n 's/^(cherry picked from commit \([0-9a-f]*\))$/\1/p')
 check 'sync: diverged: live commit recorded' test "$(git -C "$server" rev-parse "$synced_live^")" = "$live_before"
 check 'sync: diverged: server branch moved' grep -qF 'git checkout main && git reset --keep' "$work/out"
-check 'sync: diverged: rollback by revert' grep -qF 'Roll back by reverting the unwanted commits on main' \
+check 'sync: diverged: rollback by revert' grep -qF 'Roll back: revert the unwanted commits on main (keep the live' \
   "$work/out"
 check 'sync: new version deployed' grep -qx 'version' "$server/version.txt"
 check 'sync: server clean' test "$(git -C "$server" status --porcelain)" = ''
@@ -331,8 +341,7 @@ check 'sync: target is an ancestor: message' test "$(git -C "$server" log -1 --f
   = 'content: sync live changes from the server'
 check 'sync: target is an ancestor: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
 check 'sync: target is an ancestor: fast-forward' grep -qF 'git merge --ff-only' "$work/out"
-check 'sync: target is an ancestor: rollback hint' grep -qF "Roll back with: vendor/bin/deploy $live_before" \
-  "$work/out"
+check 'sync: target is an ancestor: no rollback hint' eval '! grep -qF "Roll back" "$work/out"'
 git -C "$dev" pull --quiet --ff-only
 
 # The live changes are reverted after the check: the live commit stays an ancestor of the target
