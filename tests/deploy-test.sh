@@ -396,6 +396,119 @@ expect_success 'sync: retry after failed push' --yes
 check 'sync: retry: shown' grep -qF 'The live commit is not on origin' "$work/out"
 check 'sync: retry: on origin' test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
 
+# --- Targets ---
+
+prod="$work/prod"
+git -C "$dev" pull --quiet --ff-only
+git clone --quiet "$work/origin.git" "$prod"
+
+# Stage deploys main with live changes, prod the latest tag after typing its name
+write_targets() {
+  local default_target=${1-'"defaultTarget": "stage",'} prod_extra=${2-'"confirm": "name"'}
+  cat > "$dev/deploy.json" <<JSON
+{
+  "defaultRef": "main",
+  "clearDirectories": [],
+  "syncPaths": ["content/"],
+  "after": ["touch after-ran"],
+  $default_target
+  "targets": {
+    "stage": {"host": "test-stage", "path": "$server"},
+    "prod": {"host": "test-prod", "path": "$prod", "defaultRef": "latest-tag", "syncPaths": [], $prod_extra}
+  }
+}
+JSON
+}
+
+# Waits up to 30 seconds until the file contains the text
+wait_for() {
+  local tries=300
+  until grep -qF -- "$2" "$1" 2> /dev/null; do
+    tries=$((tries - 1))
+    [[ $tries -gt 0 ]] || return 1
+    sleep 0.1
+  done
+}
+
+# Runs deploy in a terminal (script) and types the answer at the prompt; output in $work/out. The answer is sent only
+# after the prompt and stdin stays open until deploy ends, because script ends the input with ^D.
+run_deploy_tty() {
+  local answer=$1
+  shift
+  rm -f "$work/out" "$work/tty-done"
+  {
+    wait_for "$work/out" 'Type the target name to confirm:' || true
+    printf '%s\n' "$answer"
+    wait_for "$work/tty-done" finished || true
+  } | {
+    if script --version > /dev/null 2>&1; then
+      # util-linux
+      (cd "$dev" && script -qec "$(printf '%q ' "$deploy" "$@")" /dev/null) > "$work/out" 2>&1 || true
+    else
+      (cd "$dev" && script -q /dev/null "$deploy" "$@") > "$work/out" 2>&1 || true
+    fi
+    echo finished > "$work/tty-done"
+  }
+}
+
+: > "$FAKE_SSH_LOG"
+write_config main '[]'
+expect_failure 'targets: --target without targets' '--target needs "targets"' --yes --target prod
+write_targets ''
+expect_failure 'targets: choose one' 'choose a target with --target (stage, prod)' --yes
+write_targets '"defaultTarget": "live",'
+expect_failure 'targets: defaultTarget exists' 'defaultTarget "live" is no target' --yes
+write_targets '' '"confirm": "yes"'
+expect_failure 'targets: confirm' 'target "prod": "confirm" must be "name"' --yes --target prod
+write_targets '' '"port": 22'
+expect_failure 'targets: unknown key' 'target "prod": unknown key "port"' --yes --target prod
+write_targets '' '"host": "deploy@test-prod"'
+expect_failure 'targets: every target validated' 'target "prod": host must be an SSH alias' --yes --target stage
+write_targets
+expect_failure 'targets: unknown target' 'unknown target "live" (stage, prod)' --yes --target live
+expect_failure 'targets: invalid name' 'invalid target name: -x' --yes --target=-x
+check 'targets: no SSH call with an invalid configuration' test ! -s "$FAKE_SSH_LOG"
+
+echo 'staged' >> "$server/content/page/page.txt"
+prod_before=$(git -C "$prod" rev-parse HEAD)
+expect_success 'targets: defaultTarget' --yes
+check 'targets: defaultTarget: host' grep -qx 'test-stage' "$FAKE_SSH_LOG"
+check 'targets: defaultTarget: shown' grep -qF "Target:  stage (test-stage:$server)" "$work/out"
+check 'targets: defaultTarget: top-level syncPaths' \
+  test "$(server_head)" = "$(git -C "$work/origin.git" rev-parse main)"
+check 'targets: defaultTarget: prod unchanged' test "$(git -C "$prod" rev-parse HEAD)" = "$prod_before"
+git -C "$dev" pull --quiet --ff-only
+
+: > "$FAKE_SSH_LOG"
+expect_failure 'targets: confirmation without terminal' 'no terminal to confirm; use --yes' --target prod
+run_deploy_tty 'y' --target prod
+check 'targets: y is not the name' grep -qF 'cancelled' "$work/out"
+check 'targets: y is not the name: unchanged' test "$(git -C "$prod" rev-parse HEAD)" = "$prod_before"
+check 'targets: prompt names the target' grep -qF 'Deploy to prod? Type the target name to confirm:' "$work/out"
+run_deploy_tty 'prod' --target prod
+check 'targets: typed name' test "$(git -C "$prod" rev-parse HEAD)" = "$(origin_commit v1.10.0)"
+check 'targets: typed name: host' grep -qx 'test-prod' "$FAKE_SSH_LOG"
+check 'targets: typed name: not stage' eval '! grep -qx "test-stage" "$FAKE_SSH_LOG"'
+check 'targets: typed name: shown' grep -qF "Target:  prod (test-prod:$prod)" "$work/out"
+check 'targets: typed name: after command' test -f "$prod/after-ran"
+check 'targets: typed name: log' grep -q $'\tok\tv1.10.0\t' "$prod/deploy.log"
+check 'targets: rollback hint names the target' grep -qF \
+  'tag a new release and run vendor/bin/deploy --target prod' "$work/out"
+expect_success 'targets: --yes skips the typed name' --yes --target=prod v1.2.0
+check 'targets: --yes: commit' test "$(git -C "$prod" rev-parse HEAD)" = "$(origin_commit v1.2.0)"
+check 'targets: --yes: rollback hint' grep -qF \
+  'Roll back: vendor/bin/deploy --target prod (deploys the latest tag' "$work/out"
+
+# The only target is the default
+cat > "$dev/deploy.json" <<JSON
+{
+  "clearDirectories": [],
+  "targets": {"prod": {"host": "test-prod", "path": "$prod", "defaultRef": "latest-tag"}}
+}
+JSON
+expect_success 'targets: only target' --yes
+check 'targets: only target: deployed' test "$(git -C "$prod" rev-parse HEAD)" = "$(origin_commit v1.10.0)"
+
 if [[ $failures != 0 ]]; then
   echo "$failures test(s) failed"
   exit 1

@@ -1,8 +1,18 @@
 {
-  "host": "example-production",
-  "path": "/var/www/vhosts/example.com/httpdocs",
   "defaultRef": "main",
   "clearDirectories": ["app/cache/v[0-9]*/"],
   "syncPaths": [],
-  "after": []
+  "after": [],
+  "defaultTarget": "stage",
+  "targets": {
+    "stage": {
+      "host": "example-stage",
+      "path": "/var/www/vhosts/stage.example.com/httpdocs"
+    },
+    "prod": {
+      "host": "example-production",
+      "path": "/var/www/vhosts/example.com/httpdocs",
+      "confirm": "name"
+    }
+  }
 }

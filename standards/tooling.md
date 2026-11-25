@@ -166,9 +166,10 @@ Applications are deployed with `vendor/bin/deploy` of this package, run on the d
 keys. No manual `git pull` on the server, no CI/CD pipeline.
 
 ```bash
-vendor/bin/deploy          # the defaultRef of deploy.json
-vendor/bin/deploy v1.7.0   # a tag, branch or commit on origin (emergencies only, see below)
-vendor/bin/deploy --yes    # without confirmation, for scripts
+vendor/bin/deploy                 # the defaultRef of deploy.json (of the defaultTarget)
+vendor/bin/deploy v1.7.0          # a tag, branch or commit on origin (emergencies only, see below)
+vendor/bin/deploy --target prod   # another target (server) of deploy.json
+vendor/bin/deploy --yes           # without confirmation, for scripts
 ```
 
 - **Steps:** locally, `deploy` fetches origin, resolves the ref (only commits on origin, never unpushed ones), reads the
@@ -199,11 +200,20 @@ vendor/bin/deploy --yes    # without confirmation, for scripts
   | `clearDirectories` | Globs relative to the project root, deleted after `composer install` (`["app/cache/v[0-9]*/"]`)  |
   | `syncPaths`        | Optional globs of files that are edited on the server (`["content/"]`), synced into Git          |
   | `after`            | Optional shell commands, run in the project root at the end                                      |
+  | `targets`          | Optional named targets (servers), see below                                                      |
+  | `defaultTarget`    | Optional target deployed without `--target`                                                      |
 
   `clearDirectories` never leave the project root: no absolute paths, no `.`, `..` or `.git` segments, no empty
   globs, the first directory named without wildcards; matches outside the root (symbolic links) stop the deployment.
   In yuf projects use `app/cache/v[0-9]*/` (compiled templates, `v` + format version), never `app/cache/v*/`: that also
   matches `app/cache/values/`, yuf's `FileCache`.
+- **Targets:** a project with several servers (stage and production) lists them in `targets`, an object of names
+  (letters, digits, `.`, `_`, `-`) with the keys `host`, `path`, `defaultRef`, `clearDirectories`, `syncPaths` and
+  `after`. Top-level keys are the defaults of every target; a target's key replaces them (arrays are not merged).
+  Every target is validated on every run. Without `--target`, `deploy` uses `defaultTarget`, else the only target;
+  with several targets and no `defaultTarget`, `--target` is required. The confirmation shows the target with host
+  and path, and the rollback command names it. A target with `"confirm": "name"` (production) is confirmed by typing
+  its name instead of `y`; `--yes` skips it. Without `targets`, the top-level keys are the only server.
 - **Live changes (`syncPaths`):** for files that customers edit on the server (CMS content, e.g. Kirby's `content/`).
   `syncPaths` follow the rules of `clearDirectories` and need a branch as `defaultRef`. If the server's working tree
   has changes (also new or deleted files) only inside `syncPaths`, `deploy` lists them before the confirmation, then

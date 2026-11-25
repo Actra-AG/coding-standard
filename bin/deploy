@@ -4,30 +4,35 @@
 # Deploys the project to its server over SSH: the server checkout switches to a commit that exists on origin, then
 # runs composer install, clears the configured directories and runs the configured commands. Live changes on the
 # server inside syncPaths are committed there, fetched over SSH, added as one commit on top of the defaultRef branch
-# (linear history, no merge commit) and pushed to origin first. Configuration: deploy.json in the project root. Runs
-# on the developer's machine with bash 3.2 or newer (macOS default), git 2.38 or newer, ssh and jq; the server needs
-# bash (4.2 or newer, or the date command), git and composer.
+# (linear history, no merge commit) and pushed to origin first. Configuration: deploy.json in the project root, with
+# optional named targets (servers) that override its top-level keys. Runs on the developer's machine with bash 3.2 or
+# newer (macOS default), git 2.38 or newer, ssh and jq; the server needs bash (4.2 or newer, or the date command), git
+# and composer.
 
 set -euo pipefail
 
 readonly config_file='deploy.json'
 readonly log_file='deploy.log'
 readonly config_keys='["after","clearDirectories","defaultRef","host","path","syncPaths"]'
+# Names of targets: shown, typed to confirm and passed to --target
+readonly target_pattern='^[A-Za-z0-9][A-Za-z0-9._-]*$'
 readonly live_ref='refs/deploy/live'
 
 usage() {
   cat <<'USAGE'
-Usage: vendor/bin/deploy [--yes] [<tag|branch|commit>]
+Usage: vendor/bin/deploy [--yes] [--target <name>] [<tag|branch|commit>]
 
-Deploys the project to the server configured in deploy.json. Without a ref, the defaultRef of deploy.json is
+Deploys the project to the server configured in deploy.json, or to one of its targets. Without --target, the
+defaultTarget of deploy.json is deployed, or its only target. Without a ref, the defaultRef of the target is
 deployed. Only commits that exist on origin can be deployed. Roll back with git revert on the defaultRef branch, push
 and deploy again; other refs leave the checkout detached until the next deployment of the defaultRef. Live changes on
 the server inside syncPaths are committed, added as one commit on top of the defaultRef branch and pushed to origin
 first.
 
 Options:
-  -y, --yes   Deploy without asking for confirmation
-  -h, --help  Show this help
+  -t, --target <name>  Deploy to this target of deploy.json
+  -y, --yes            Deploy without asking for confirmation
+  -h, --help           Show this help
 USAGE
 }
 
@@ -60,53 +65,117 @@ validate_pattern() {
   done
 }
 
-# Reads and validates deploy.json; sets host, path, default_ref, clear_patterns, sync_patterns and after_commands
+# Reads and validates deploy.json and selects the target; sets target, host, path, default_ref, confirm,
+# clear_patterns, sync_patterns and after_commands
 read_config() {
-  local errors line
+  local errors name names=''
+  local -a target_names=()
   [[ -f $config_file ]] || fail "$config_file not found in the project root (template: templates/deploy.json)"
-  errors=$(jq -r --argjson known "$config_keys" '
-    . as $config
-    | if type != "object" then "the file must contain a JSON object" else
-        (keys - $known | .[] | "unknown key \"\(.)\""),
-        ("host", "path", "defaultRef" | select(($config[.] | type) != "string") | "\"\(.)\" must be a string"),
+  errors=$(jq -r --argjson known "$config_keys" --arg name_pattern "$target_pattern" '
+    # Errors of a complete configuration (top-level keys, or top-level keys merged with a target)
+    def check_values:
+      . as $config
+      | ("host", "path", "defaultRef" | select(($config[.] | type) != "string") | "\"\(.)\" must be a string"),
         ("clearDirectories", "syncPaths", "after"
           | . as $key
           | select($config | has($key))
           | select(($config[$key] | type) != "array" or ($config[$key] | map(type) | unique - ["string"] != []))
           | "\"\($key)\" must be an array of strings"),
-        (select("clearDirectories" | in($config) | not) | "\"clearDirectories\" is missing (use [] for none)"),
-        (select([.. | strings | select(test("[[:cntrl:]]"))] != []) | "values must not contain control characters")
+        (select("clearDirectories" | in($config) | not) | "\"clearDirectories\" is missing (use [] for none)");
+    . as $config
+    | if type != "object" then "the file must contain a JSON object" else
+        (keys - $known - ["defaultTarget", "targets"] | .[] | "unknown key \"\(.)\""),
+        (select([.. | strings | select(test("[[:cntrl:]]"))] != []) | "values must not contain control characters"),
+        if has("targets") | not then
+          (select(has("defaultTarget")) | "\"defaultTarget\" needs \"targets\""),
+          check_values
+        elif (.targets | type) != "object" or .targets == {} then
+          "\"targets\" must be an object with at least one target"
+        else
+          (select(has("defaultTarget"))
+            | if (.defaultTarget | type) != "string" then "\"defaultTarget\" must be a string"
+              elif .targets | has($config.defaultTarget) | not then "defaultTarget \"\(.defaultTarget)\" is no target"
+              else empty end),
+          (.targets | to_entries[]
+            | . as $target
+            | "target \"\(.key)\": " as $prefix
+            | if .key | test($name_pattern) | not then
+                "target name \"\(.key)\" may only contain letters, digits and . _ -"
+              elif (.value | type) != "object" then
+                "\($prefix)must be an object"
+              else
+                (.value | keys - $known - ["confirm"] | .[] | "\($prefix)unknown key \"\(.)\""),
+                (select(.value | has("confirm")) | select(.value.confirm != "name")
+                  | "\($prefix)\"confirm\" must be \"name\""),
+                ($config | del(.targets, .defaultTarget) + $target.value | check_values | "\($prefix)\(.)")
+              end)
+        end
       end
   ' "$config_file") || fail "$config_file is not valid JSON"
   [[ $errors == '' ]] || fail "invalid $config_file: ${errors//$'\n'/; }"
 
-  host=$(jq -r '.host' "$config_file")
-  path=$(jq -r '.path' "$config_file")
-  default_ref=$(jq -r '.defaultRef' "$config_file")
+  while IFS= read -r name; do target_names+=("$name"); done < <(jq -r '.targets // {} | keys_unsorted[]' "$config_file")
+  # Every target is validated, so a broken one is found before it is needed
+  for name in ${target_names[@]+"${target_names[@]}"}; do
+    load_target "$name"
+    names+="${names:+, }$name"
+  done
+  if [[ ${#target_names[@]} == 0 ]]; then
+    [[ $target == '' ]] || fail "--target needs \"targets\" in $config_file"
+  elif [[ $target == '' ]]; then
+    target=$(jq -r '.defaultTarget // empty' "$config_file")
+    if [[ $target == '' ]]; then
+      [[ ${#target_names[@]} == 1 ]] || fail "choose a target with --target ($names)"
+      target=${target_names[0]}
+    fi
+  else
+    for name in "${target_names[@]}"; do
+      [[ $name != "$target" ]] || break
+    done
+    [[ $name == "$target" ]] || fail "unknown target \"$target\" ($names)"
+  fi
+  load_target "$target"
+}
+
+# Reads and validates one target (empty: the top-level keys); sets host, path, default_ref, confirm, clear_patterns,
+# sync_patterns and after_commands
+load_target() {
+  local config line pattern command prefix=''
+  [[ $1 == '' ]] || prefix="target \"$1\": "
+  # Top-level keys are the defaults of every target
+  config=$(jq -c --arg target "$1" \
+    'if $target == "" then . else del(.targets, .defaultTarget) + .targets[$target] end' "$config_file")
+  host=$(jq -r '.host' <<< "$config")
+  path=$(jq -r '.path' <<< "$config")
+  default_ref=$(jq -r '.defaultRef' <<< "$config")
+  confirm=$(jq -r '.confirm // "yes"' <<< "$config")
   clear_patterns=()
-  while IFS= read -r line; do clear_patterns+=("$line"); done < <(jq -r '.clearDirectories[]' "$config_file")
+  while IFS= read -r line; do clear_patterns+=("$line"); done < <(jq -r '.clearDirectories[]' <<< "$config")
   sync_patterns=()
-  while IFS= read -r line; do sync_patterns+=("$line"); done < <(jq -r '.syncPaths // [] | .[]' "$config_file")
+  while IFS= read -r line; do sync_patterns+=("$line"); done < <(jq -r '.syncPaths // [] | .[]' <<< "$config")
   after_commands=()
-  while IFS= read -r line; do after_commands+=("$line"); done < <(jq -r '.after // [] | .[]' "$config_file")
+  while IFS= read -r line; do after_commands+=("$line"); done < <(jq -r '.after // [] | .[]' <<< "$config")
 
   # An SSH alias of ~/.ssh/config: user, port and key belong there, not into the project
-  [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || fail "host must be an SSH alias (letters, digits, . _ -)"
-  [[ $path =~ ^/[A-Za-z0-9._@+/-]+$ ]] || fail "path must be an absolute path (letters, digits, . _ @ + - /)"
+  [[ $host =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || fail "${prefix}host must be an SSH alias (letters, digits, . _ -)"
+  [[ $path =~ ^/[A-Za-z0-9._@+/-]+$ ]] \
+    || fail "${prefix}path must be an absolute path (letters, digits, . _ @ + - /)"
   case "$path/" in
-    *//* | */./* | */../*) fail "path must not contain empty, . or .. segments" ;;
+    *//* | */./* | */../*) fail "${prefix}path must not contain empty, . or .. segments" ;;
   esac
   if [[ $default_ref != latest-tag ]] \
     && { [[ $default_ref == -* ]] || ! git check-ref-format "refs/heads/$default_ref"; }; then
-    fail "defaultRef must be latest-tag or a branch name"
+    fail "${prefix}defaultRef must be latest-tag or a branch name"
   fi
-  local pattern command
-  for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do validate_pattern clearDirectories "$pattern"; done
-  for pattern in ${sync_patterns[@]+"${sync_patterns[@]}"}; do validate_pattern syncPaths "$pattern"; done
+  for pattern in ${clear_patterns[@]+"${clear_patterns[@]}"}; do
+    validate_pattern "${prefix}clearDirectories" "$pattern"
+  done
+  for pattern in ${sync_patterns[@]+"${sync_patterns[@]}"}; do validate_pattern "${prefix}syncPaths" "$pattern"; done
   # Live changes are committed on top of a branch; a tag cannot take them
-  [[ ${#sync_patterns[@]} == 0 || $default_ref != latest-tag ]] || fail "syncPaths needs a branch as defaultRef"
+  [[ ${#sync_patterns[@]} == 0 || $default_ref != latest-tag ]] \
+    || fail "${prefix}syncPaths needs a branch as defaultRef"
   for command in ${after_commands[@]+"${after_commands[@]}"}; do
-    [[ $command =~ [^[:space:]] ]] || fail "after must not contain empty commands"
+    [[ $command =~ [^[:space:]] ]] || fail "${prefix}after must not contain empty commands"
   done
 }
 
@@ -187,18 +256,18 @@ rollback_hint() {
   fi
   # Another ref than the defaultRef was deployed (detached checkout): deploy the defaultRef again
   if [[ $ref != '' && $target_branch == '' ]]; then
-    printf 'vendor/bin/deploy (deploys %s; the checkout stays detached until then)' "$default"
+    printf '%s (deploys %s; the checkout stays detached until then)' "$deploy_command" "$default"
     return
   fi
   [[ $live != "$target" ]] || return 0
   if git cat-file -e "$live^{commit}" 2> /dev/null && git merge-base --is-ancestor "$live" "$target"; then
     range="$(git rev-parse --short "$live")..$(git rev-parse --short "$target")"
-    printf 'git revert --no-edit %s on %s (one commit: git revert <commit>), push%s and run vendor/bin/deploy' \
-      "$range" "$branch" "$release"
+    printf 'git revert --no-edit %s on %s (one commit: git revert <commit>), push%s and run %s' \
+      "$range" "$branch" "$release" "$deploy_command"
   else
     # The live commit is unknown or no ancestor (e.g. live changes added on top): revert by hand
     [[ $synced_commit == '' ]] || keep=' (keep the live changes)'
-    printf 'revert the unwanted commits on %s%s, push%s and run vendor/bin/deploy' "$branch" "$keep" "$release"
+    printf 'revert the unwanted commits on %s%s, push%s and run %s' "$branch" "$keep" "$release" "$deploy_command"
   fi
 }
 
@@ -444,9 +513,19 @@ remote_deploy() {
 
 assume_yes=0
 ref=''
+target=''
 while [[ $# -gt 0 ]]; do
   case $1 in
     -y | --yes) assume_yes=1 ;;
+    -t | --target)
+      [[ $# -gt 1 && $2 != '' ]] || fail "$1 needs a target name"
+      target=$2
+      shift
+      ;;
+    --target=*)
+      target=${1#--target=}
+      [[ $target != '' ]] || fail '--target needs a target name'
+      ;;
     -h | --help)
       usage
       exit 0
@@ -470,7 +549,9 @@ command -v jq > /dev/null || fail 'jq is required (macOS 15 and newer include it
 project_root=$(git rev-parse --show-toplevel 2> /dev/null) || fail 'run deploy inside the project'
 cd "$project_root"
 git remote get-url origin > /dev/null 2>&1 || fail 'the project has no remote named origin'
+[[ $target == '' || $target =~ $target_pattern ]] || fail "invalid target name: $target"
 read_config
+deploy_command="vendor/bin/deploy${target:+ --target $target}"
 
 echo 'Fetching origin …'
 git fetch --tags --force origin
@@ -494,7 +575,11 @@ if [[ ${#sync_patterns[@]} != 0 ]] && { [[ $live_changes != '' ]] || ! on_origin
 fi
 
 echo
-echo "Server:  $host:$path"
+if [[ $target != '' ]]; then
+  echo "Target:  $target ($host:$path)"
+else
+  echo "Server:  $host:$path"
+fi
 echo "Live:    $(describe "$live_commit")${live_branch:+ on branch $live_branch}"
 echo "Deploy:  $(describe "$target_commit") ← $ref_label${target_branch:+ (branch, fast-forward)}"
 if [[ $sync == 1 ]]; then
@@ -511,11 +596,16 @@ echo
 
 if [[ $assume_yes != 1 ]]; then
   [[ -t 0 ]] || fail 'no terminal to confirm; use --yes'
-  read -r -p 'Deploy? [y/N] ' answer || answer=''
-  case $answer in
-    y | Y | yes | Yes) ;;
-    *) fail 'cancelled' ;;
-  esac
+  if [[ $confirm == name ]]; then
+    read -r -p "Deploy to $target? Type the target name to confirm: " answer || answer=''
+    [[ $answer == "$target" ]] || fail 'cancelled'
+  else
+    read -r -p "Deploy${target:+ to $target}? [y/N] " answer || answer=''
+    case $answer in
+      y | Y | yes | Yes) ;;
+      *) fail 'cancelled' ;;
+    esac
+  fi
 fi
 
 user_name=$(git config user.name || true)

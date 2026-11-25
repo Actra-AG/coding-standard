@@ -3,6 +3,14 @@
 Changes of the Actra coding standard, newest first. ⚠️ marks changes that may make `composer check` of existing
 projects fail or that change how projects work.
 
+## v2.6.0 (2026-11-25)
+
+- `vendor/bin/deploy` deploys to named targets: the new optional `deploy.json` keys `targets` (servers, e.g. stage and
+  production, overriding the top-level keys) and `defaultTarget`, the option `--target <name>`, and
+  `"confirm": "name"` for targets that are confirmed by typing their name ([tooling.md](standards/tooling.md),
+  section 8, [template](templates/deploy.json)). Existing `deploy.json` files work unchanged. No action needed in
+  projects.
+
 ## v2.5.2 (2026-11-21)
 
 - `vendor/bin/deploy` suggests rolling back with `git revert` on the `defaultRef` branch, push and a normal deployment,
